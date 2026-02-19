@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% load core_tags %}
+
+{% block title %}Backlog Report{% endblock %}
+{% block page_title %}Backlog Report{% endblock %}
+{% block page_subtitle %}Overdue tasks requiring attention{% endblock %}
+
+{% block content %}
+<div class="fade-in space-y-6">
+
+    <!-- Back Link -->
+    <a href="{% url 'reports_dashboard' %}" class="inline-flex items-center text-sm text-gray-500 hover:text-primary-600 font-medium transition">
+        <i class="fas fa-arrow-left mr-2"></i> Back to Reports
+    </a>
+
+    {% if overdue_tasks %}
+    <div class="glass-card rounded-2xl overflow-hidden">
+        <div class="p-5 border-b border-gray-100 flex items-center justify-between">
+            <h3 class="text-sm font-bold text-gray-800"><i class="fas fa-clock text-red-500 mr-2"></i> Overdue Tasks ({{ overdue_tasks|length }})</h3>
+        </div>
+
+        <!-- Desktop Table -->
+        <div class="hidden lg:block overflow-x-auto">
+            <table class="w-full">
+                <thead>
+                    <tr class="bg-gray-50/80 border-b border-gray-200">
+                        <th class="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Task</th>
+                        <th class="text-center px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Days Overdue</th>
+                        <th class="text-center px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Priority</th>
+                        <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Assignees</th>
+                        <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Outlet</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    {% for task in overdue_tasks %}
+                    <tr class="hover:bg-red-50/30 transition">
+                        <td class="px-5 py-3.5">
+                            <span class="text-sm font-semibold text-gray-800">{{ task.title }}</span>
+                        </td>
+                        <td class="px-4 py-3.5 text-center">
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold {% if task.days_overdue > 7 %}bg-red-100 text-red-700{% elif task.days_overdue > 3 %}bg-orange-100 text-orange-700{% else %}bg-yellow-100 text-yellow-700{% endif %}">
+                                <i class="fas fa-exclamation-circle mr-1 text-[10px]"></i> {{ task.days_overdue }} days
+                            </span>
+                        </td>
+                        <td class="px-4 py-3.5 text-center">
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold {{ task.priority|priority_badge_class }}">
+                                {{ task.get_priority_display|default:task.priority|title }}
+                            </span>
+                        </td>
+                        <td class="px-4 py-3.5">
+                            <div class="flex -space-x-2">
+                                {% for person in task.assignee_list %}
+                                <div class="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold border-2 border-white" style="background-color: {{ person.avatar_color }}" title="{{ person.full_name }}">
+                                    {{ person.initials }}
+                                </div>
+                                {% empty %}
+                                <span class="text-xs text-gray-400 italic">Unassigned</span>
+                                {% endfor %}
+                            </div>
+                        </td>
+                        <td class="px-4 py-3.5">
+                            {% if task.outlet %}
+                            <span class="text-xs text-gray-600 font-medium"><i class="fas fa-store mr-1 text-gray-400"></i>{{ task.outlet.name }}</span>
+                            {% else %}
+                            <span class="text-xs text-gray-400">&mdash;</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Mobile Cards -->
+        <div class="lg:hidden p-4 space-y-3">
+            {% for task in overdue_tasks %}
+            <div class="bg-red-50/50 rounded-xl p-4 border border-red-100">
+                <div class="flex items-start justify-between mb-2">
+                    <h4 class="text-sm font-bold text-gray-800 flex-1 pr-2">{{ task.title }}</h4>
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold {% if task.days_overdue > 7 %}bg-red-100 text-red-700{% elif task.days_overdue > 3 %}bg-orange-100 text-orange-700{% else %}bg-yellow-100 text-yellow-700{% endif %}">
+                        {{ task.days_overdue }}d overdue
+                    </span>
+                </div>
+                <div class="flex items-center gap-2 flex-wrap">
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold {{ task.priority|priority_badge_class }}">
+                        {{ task.get_priority_display|default:task.priority|title }}
+                    </span>
+                    {% if task.outlet %}
+                    <span class="text-xs text-gray-500"><i class="fas fa-store mr-1"></i>{{ task.outlet.name }}</span>
+                    {% endif %}
+                </div>
+                {% if task.assignee_list %}
+                <div class="flex -space-x-1.5 mt-2">
+                    {% for person in task.assignee_list %}
+                    <div class="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold border-2 border-white" style="background-color: {{ person.avatar_color }}">{{ person.initials }}</div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    {% else %}
+    <div class="glass-card rounded-2xl p-12 text-center fade-in">
+        <div class="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-5">
+            <i class="fas fa-check-circle text-3xl text-green-400"></i>
+        </div>
+        <h3 class="text-lg font-bold text-gray-800 mb-2">No overdue tasks!</h3>
+        <p class="text-sm text-gray-500 max-w-sm mx-auto">All tasks are on track. Great job keeping up!</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

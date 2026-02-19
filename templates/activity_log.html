@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+{% load core_tags %}
+
+{% block title %}Activity Log{% endblock %}
+{% block page_title %}Activity Log{% endblock %}
+{% block page_subtitle %}Track all actions across your organization{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+    <!-- Filters -->
+    <div class="bg-white rounded-xl border border-gray-100 p-4 mb-6">
+        <form method="get" class="flex flex-wrap items-end gap-4">
+            <div class="flex-1 min-w-[200px]">
+                <label class="block text-xs font-medium text-gray-500 mb-1">Search</label>
+                <input type="text" name="search" value="{{ request.GET.search }}"
+                    class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm"
+                    placeholder="Search activity...">
+            </div>
+            <div class="min-w-[150px]">
+                <label class="block text-xs font-medium text-gray-500 mb-1">Action Type</label>
+                <select name="action" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm">
+                    <option value="">All Actions</option>
+                    <option value="created" {% if request.GET.action == "created" %}selected{% endif %}>Created</option>
+                    <option value="updated" {% if request.GET.action == "updated" %}selected{% endif %}>Updated</option>
+                    <option value="deleted" {% if request.GET.action == "deleted" %}selected{% endif %}>Deleted</option>
+                    <option value="commented" {% if request.GET.action == "commented" %}selected{% endif %}>Commented</option>
+                    <option value="status_changed" {% if request.GET.action == "status_changed" %}selected{% endif %}>Status Changed</option>
+                    <option value="assigned" {% if request.GET.action == "assigned" %}selected{% endif %}>Assigned</option>
+                </select>
+            </div>
+            <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700">
+                <i class="fas fa-filter mr-1"></i>Filter
+            </button>
+            <a href="{% url 'activity_log' %}" class="px-4 py-2 bg-gray-100 text-gray-600 rounded-lg text-sm font-medium hover:bg-gray-200">
+                Clear
+            </a>
+        </form>
+    </div>
+
+    <!-- Activity Timeline -->
+    <div class="bg-white rounded-xl border border-gray-100 overflow-hidden">
+        {% if activities %}
+        <div class="divide-y divide-gray-50">
+            {% for activity in activities %}
+            <div class="px-6 py-4 hover:bg-gray-50 transition flex items-start space-x-4">
+                <!-- Icon -->
+                <div class="flex-shrink-0 mt-0.5">
+                    {% if activity.action == 'created' %}
+                    <div class="w-9 h-9 rounded-lg bg-green-100 flex items-center justify-center">
+                        <i class="fas fa-plus text-green-600 text-sm"></i>
+                    </div>
+                    {% elif activity.action == 'updated' %}
+                    <div class="w-9 h-9 rounded-lg bg-blue-100 flex items-center justify-center">
+                        <i class="fas fa-pen text-blue-600 text-sm"></i>
+                    </div>
+                    {% elif activity.action == 'deleted' %}
+                    <div class="w-9 h-9 rounded-lg bg-red-100 flex items-center justify-center">
+                        <i class="fas fa-trash text-red-600 text-sm"></i>
+                    </div>
+                    {% elif activity.action == 'commented' %}
+                    <div class="w-9 h-9 rounded-lg bg-yellow-100 flex items-center justify-center">
+                        <i class="fas fa-comment text-yellow-600 text-sm"></i>
+                    </div>
+                    {% elif activity.action == 'status_changed' %}
+                    <div class="w-9 h-9 rounded-lg bg-purple-100 flex items-center justify-center">
+                        <i class="fas fa-exchange-alt text-purple-600 text-sm"></i>
+                    </div>
+                    {% elif activity.action == 'assigned' %}
+                    <div class="w-9 h-9 rounded-lg bg-indigo-100 flex items-center justify-center">
+                        <i class="fas fa-user-tag text-indigo-600 text-sm"></i>
+                    </div>
+                    {% else %}
+                    <div class="w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center">
+                        <i class="fas fa-circle text-gray-400 text-sm"></i>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Content -->
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-sm font-semibold text-gray-800">
+                            {{ activity.user.full_name|default:"System" }}
+                        </span>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium
+                            {% if activity.action == 'created' %}bg-green-100 text-green-700
+                            {% elif activity.action == 'updated' %}bg-blue-100 text-blue-700
+                            {% elif activity.action == 'deleted' %}bg-red-100 text-red-700
+                            {% elif activity.action == 'commented' %}bg-yellow-100 text-yellow-700
+                            {% elif activity.action == 'status_changed' %}bg-purple-100 text-purple-700
+                            {% elif activity.action == 'assigned' %}bg-indigo-100 text-indigo-700
+                            {% else %}bg-gray-100 text-gray-700{% endif %}">
+                            {{ activity.action|title }}
+                        </span>
+                    </div>
+                    <p class="text-sm text-gray-600 mt-0.5">
+                        {{ activity.action|title }} {{ activity.entity_type }} {% if activity.entity_name %}<strong>{{ activity.entity_name }}</strong>{% endif %}
+                        {% if activity.details %}<span class="text-gray-400">— {{ activity.details }}</span>{% endif %}
+                    </p>
+                    <div class="flex items-center space-x-3 mt-1">
+                        <span class="text-xs text-gray-400">
+                            <i class="far fa-clock mr-1"></i>{{ activity.created_at|timesince }} ago
+                        </span>
+                        {% if activity.entity_type %}
+                        <span class="text-xs text-gray-400">
+                            <i class="fas fa-tag mr-1"></i>{{ activity.entity_type|title }}
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if activities.has_other_pages %}
+        <div class="px-6 py-4 border-t border-gray-100 flex items-center justify-between">
+            <p class="text-sm text-gray-500">
+                Showing page {{ activities.number }} of {{ activities.paginator.num_pages }}
+            </p>
+            <div class="flex items-center space-x-2">
+                {% if activities.has_previous %}
+                <a href="?page={{ activities.previous_page_number }}&{{ request.GET.urlencode }}"
+                    class="px-3 py-1.5 text-sm text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200">
+                    <i class="fas fa-chevron-left"></i>
+                </a>
+                {% endif %}
+                {% if activities.has_next %}
+                <a href="?page={{ activities.next_page_number }}&{{ request.GET.urlencode }}"
+                    class="px-3 py-1.5 text-sm text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200">
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% else %}
+        <div class="text-center py-16">
+            <div class="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-history text-gray-400 text-2xl"></i>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-700">No Activity Yet</h3>
+            <p class="text-sm text-gray-500 mt-1">Activity will appear here as actions are performed</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

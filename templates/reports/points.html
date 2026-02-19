@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+{% load core_tags %}
+
+{% block title %}Points Allocation{% endblock %}
+{% block page_title %}Points Allocation{% endblock %}
+{% block page_subtitle %}Employee leaderboard by points{% endblock %}
+
+{% block content %}
+<div class="fade-in space-y-6">
+
+    <!-- Back Link -->
+    <a href="{% url 'reports_dashboard' %}" class="inline-flex items-center text-sm text-gray-500 hover:text-primary-600 font-medium transition">
+        <i class="fas fa-arrow-left mr-2"></i> Back to Reports
+    </a>
+
+    {% if data %}
+    <!-- Top 3 Podium -->
+    {% if data|length >= 3 %}
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <!-- 2nd Place -->
+        <div class="glass-card rounded-2xl p-6 text-center hover-lift order-2 md:order-1">
+            <div class="w-14 h-14 rounded-full bg-gray-200 flex items-center justify-center mx-auto mb-3 ring-4 ring-gray-300">
+                <i class="fas fa-medal text-gray-500 text-xl"></i>
+            </div>
+            <div class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">2nd Place</div>
+            <h4 class="text-sm font-bold text-gray-800">{{ data.1.employee_name }}</h4>
+            <p class="text-xs text-gray-500 mt-0.5">{{ data.1.outlet|default:"—" }} &middot; {{ data.1.team|default:"—" }}</p>
+            <div class="mt-3 inline-flex items-center px-3 py-1.5 rounded-full text-sm font-bold bg-gray-100 text-gray-700">
+                <i class="fas fa-star text-gray-400 mr-1.5"></i> {{ data.1.points }} pts
+            </div>
+            <p class="text-xs text-gray-400 mt-2">{{ data.1.tasks_completed }} tasks completed</p>
+        </div>
+
+        <!-- 1st Place -->
+        <div class="glass-card rounded-2xl p-6 text-center hover-lift ring-2 ring-yellow-300 order-1 md:order-2 bg-gradient-to-b from-yellow-50/50 to-white">
+            <div class="w-16 h-16 rounded-full bg-yellow-100 flex items-center justify-center mx-auto mb-3 ring-4 ring-yellow-400">
+                <i class="fas fa-crown text-yellow-500 text-2xl"></i>
+            </div>
+            <div class="text-xs font-bold text-yellow-600 uppercase tracking-wider mb-1">1st Place</div>
+            <h4 class="text-base font-bold text-gray-800">{{ data.0.employee_name }}</h4>
+            <p class="text-xs text-gray-500 mt-0.5">{{ data.0.outlet|default:"—" }} &middot; {{ data.0.team|default:"—" }}</p>
+            <div class="mt-3 inline-flex items-center px-4 py-2 rounded-full text-sm font-bold bg-yellow-100 text-yellow-700">
+                <i class="fas fa-trophy text-yellow-500 mr-1.5"></i> {{ data.0.points }} pts
+            </div>
+            <p class="text-xs text-gray-400 mt-2">{{ data.0.tasks_completed }} tasks completed</p>
+        </div>
+
+        <!-- 3rd Place -->
+        <div class="glass-card rounded-2xl p-6 text-center hover-lift order-3">
+            <div class="w-14 h-14 rounded-full bg-orange-100 flex items-center justify-center mx-auto mb-3 ring-4 ring-orange-300">
+                <i class="fas fa-medal text-orange-500 text-xl"></i>
+            </div>
+            <div class="text-xs font-bold text-orange-500 uppercase tracking-wider mb-1">3rd Place</div>
+            <h4 class="text-sm font-bold text-gray-800">{{ data.2.employee_name }}</h4>
+            <p class="text-xs text-gray-500 mt-0.5">{{ data.2.outlet|default:"—" }} &middot; {{ data.2.team|default:"—" }}</p>
+            <div class="mt-3 inline-flex items-center px-3 py-1.5 rounded-full text-sm font-bold bg-orange-100 text-orange-700">
+                <i class="fas fa-star text-orange-400 mr-1.5"></i> {{ data.2.points }} pts
+            </div>
+            <p class="text-xs text-gray-400 mt-2">{{ data.2.tasks_completed }} tasks completed</p>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Full Leaderboard Table -->
+    <div class="glass-card rounded-2xl overflow-hidden">
+        <div class="p-5 border-b border-gray-100">
+            <h3 class="text-sm font-bold text-gray-800"><i class="fas fa-trophy text-yellow-500 mr-2"></i> Full Leaderboard</h3>
+        </div>
+
+        <!-- Desktop Table -->
+        <div class="hidden lg:block overflow-x-auto">
+            <table class="w-full">
+                <thead>
+                    <tr class="bg-gray-50/80 border-b border-gray-200">
+                        <th class="text-center px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider w-16">Rank</th>
+                        <th class="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Employee Name</th>
+                        <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Outlet</th>
+                        <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Team</th>
+                        <th class="text-center px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Points</th>
+                        <th class="text-center px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Tasks Completed</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    {% for row in data %}
+                    <tr class="hover:bg-primary-50/30 transition {% if forloop.counter == 1 %}bg-yellow-50/30{% elif forloop.counter == 2 %}bg-gray-50/30{% elif forloop.counter == 3 %}bg-orange-50/30{% endif %}">
+                        <td class="px-4 py-3.5 text-center">
+                            {% if forloop.counter == 1 %}
+                            <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-yellow-100 text-yellow-600 font-bold text-sm"><i class="fas fa-crown"></i></span>
+                            {% elif forloop.counter == 2 %}
+                            <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gray-200 text-gray-600 font-bold text-sm">2</span>
+                            {% elif forloop.counter == 3 %}
+                            <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-orange-100 text-orange-600 font-bold text-sm">3</span>
+                            {% else %}
+                            <span class="text-sm font-bold text-gray-500">{{ forloop.counter }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-5 py-3.5">
+                            <span class="text-sm font-semibold text-gray-800">{{ row.employee_name }}</span>
+                        </td>
+                        <td class="px-4 py-3.5">
+                            <span class="text-xs text-gray-600 font-medium">{{ row.outlet|default:"—" }}</span>
+                        </td>
+                        <td class="px-4 py-3.5">
+                            <span class="text-xs text-gray-600 font-medium">{{ row.team|default:"—" }}</span>
+                        </td>
+                        <td class="px-4 py-3.5 text-center">
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-purple-100 text-purple-700">
+                                <i class="fas fa-star text-[10px] mr-1"></i> {{ row.points }}
+                            </span>
+                        </td>
+                        <td class="px-4 py-3.5 text-center">
+                            <span class="text-sm font-bold text-gray-800">{{ row.tasks_completed }}</span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Mobile Cards -->
+        <div class="lg:hidden p-4 space-y-3">
+            {% for row in data %}
+            <div class="bg-gray-50 rounded-xl p-4 flex items-center gap-3 {% if forloop.counter == 1 %}ring-2 ring-yellow-300 bg-yellow-50/50{% elif forloop.counter == 2 %}ring-1 ring-gray-300{% elif forloop.counter == 3 %}ring-1 ring-orange-300{% endif %}">
+                <div class="flex-shrink-0">
+                    {% if forloop.counter == 1 %}
+                    <div class="w-10 h-10 rounded-full bg-yellow-100 text-yellow-600 flex items-center justify-center font-bold"><i class="fas fa-crown"></i></div>
+                    {% elif forloop.counter == 2 %}
+                    <div class="w-10 h-10 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center font-bold">2</div>
+                    {% elif forloop.counter == 3 %}
+                    <div class="w-10 h-10 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center font-bold">3</div>
+                    {% else %}
+                    <div class="w-10 h-10 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center font-bold">{{ forloop.counter }}</div>
+                    {% endif %}
+                </div>
+                <div class="flex-1 min-w-0">
+                    <h4 class="text-sm font-bold text-gray-800">{{ row.employee_name }}</h4>
+                    <p class="text-xs text-gray-500">{{ row.outlet|default:"—" }} &middot; {{ row.team|default:"—" }}</p>
+                </div>
+                <div class="text-right flex-shrink-0">
+                    <div class="text-sm font-bold text-purple-600"><i class="fas fa-star text-[10px] mr-0.5"></i>{{ row.points }}</div>
+                    <div class="text-xs text-gray-400">{{ row.tasks_completed }} tasks</div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    {% else %}
+    <div class="glass-card rounded-2xl p-12 text-center fade-in">
+        <div class="w-20 h-20 bg-primary-50 rounded-full flex items-center justify-center mx-auto mb-5">
+            <i class="fas fa-trophy text-3xl text-primary-400"></i>
+        </div>
+        <h3 class="text-lg font-bold text-gray-800 mb-2">No data available</h3>
+        <p class="text-sm text-gray-500 max-w-sm mx-auto">There are no points records to display yet.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

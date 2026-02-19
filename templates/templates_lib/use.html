@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% load core_tags %}
+
+{% block title %}Use Template: {{ template.name }}{% endblock %}
+{% block page_title %}Use Template{% endblock %}
+{% block page_subtitle %}Create a task from "{{ template.name }}"{% endblock %}
+
+{% block content %}
+<div class="fade-in space-y-6">
+
+    <!-- Back Link -->
+    <a href="{% url 'template_detail' template.id %}" class="inline-flex items-center text-sm text-gray-500 hover:text-primary-600 font-medium transition">
+        <i class="fas fa-arrow-left mr-2"></i> Back to Template
+    </a>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <!-- Form -->
+        <div class="lg:col-span-2">
+            <form method="post" class="space-y-6">
+                {% csrf_token %}
+
+                <div class="glass-card rounded-2xl p-5 lg:p-6 space-y-5">
+                    <div class="flex items-center gap-3 mb-2">
+                        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-purple-500 flex items-center justify-center">
+                            <i class="fas fa-play text-white"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-lg font-bold text-gray-800">Create Task from Template</h2>
+                            <p class="text-xs text-gray-500">Customize the pre-filled values below</p>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wider">Title</label>
+                        <input type="text" name="title" value="{{ template.name }}" required
+                               class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-semibold focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition">
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wider">Outlet</label>
+                            <select name="outlet" class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition">
+                                <option value="">— Select Outlet —</option>
+                                {% for o in outlets %}
+                                <option value="{{ o.id }}">{{ o.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wider">Project</label>
+                            <select name="project" class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition">
+                                <option value="">— Select Project —</option>
+                                {% for p in projects %}
+                                <option value="{{ p.id }}">{{ p.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wider">Team</label>
+                            <select name="team" class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition">
+                                <option value="">— Select Team —</option>
+                                {% for t in teams %}
+                                <option value="{{ t.id }}">{{ t.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wider">Assigned To</label>
+                            <select name="assigned_to" class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition">
+                                <option value="">— Select Member —</option>
+                                {% for m in members %}
+                                <option value="{{ m.id }}">{{ m.full_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wider">Due Date</label>
+                            <input type="datetime-local" name="due_date"
+                                   class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submit -->
+                <div class="flex items-center justify-end gap-3">
+                    <a href="{% url 'template_detail' template.id %}" class="px-5 py-2.5 bg-gray-100 text-gray-700 text-sm font-semibold rounded-xl hover:bg-gray-200 transition">
+                        Cancel
+                    </a>
+                    <button type="submit" class="px-6 py-2.5 bg-gradient-to-r from-primary-600 to-purple-600 text-white text-sm font-semibold rounded-xl hover:shadow-lg hover:shadow-primary-500/25 transition-all hover:-translate-y-0.5">
+                        <i class="fas fa-rocket mr-2"></i> Create Task
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Template Preview Sidebar -->
+        <div class="space-y-6">
+            <div class="glass-card rounded-2xl p-5">
+                <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Template Info</h3>
+                <div class="space-y-3 text-sm">
+                    <div class="flex items-center justify-between">
+                        <span class="text-gray-500">Priority</span>
+                        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold {{ template.default_priority|priority_badge_class }}">
+                            {{ template.get_default_priority_display|default:"None" }}
+                        </span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-gray-500">Points</span>
+                        <span class="font-semibold text-gray-800">{{ template.default_points|default:"0" }}</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-gray-500">Recurrence</span>
+                        <span class="font-semibold text-gray-800">{{ template.get_recurrence_display|default:"None" }}</span>
+                    </div>
+                </div>
+            </div>
+
+            {% if subtasks %}
+            <div class="glass-card rounded-2xl p-5">
+                <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
+                    <i class="fas fa-list-check text-primary-500 mr-1"></i> Steps from Subtasks
+                </h3>
+                <p class="text-xs text-gray-500 mb-3">These subtasks will be converted to task steps:</p>
+                <div class="space-y-2">
+                    {% for subtask in subtasks %}
+                    <div class="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
+                        <div class="w-5 h-5 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center text-[10px] font-bold">
+                            {{ forloop.counter }}
+                        </div>
+                        <span class="text-xs text-gray-700 font-medium">{{ subtask.title }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

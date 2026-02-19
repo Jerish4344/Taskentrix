@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+{% load core_tags %}
+
+{% block title %}Create Form{% endblock %}
+{% block page_title %}Create Form{% endblock %}
+{% block page_subtitle %}Build a new custom form{% endblock %}
+
+{% block content %}
+<div class="fade-in space-y-6">
+
+    <!-- Back Link -->
+    <a href="{% url 'form_list' %}" class="inline-flex items-center text-sm text-gray-500 hover:text-primary-600 font-medium transition">
+        <i class="fas fa-arrow-left mr-2"></i> Back to Forms
+    </a>
+
+    <form method="post" class="space-y-6">
+        {% csrf_token %}
+
+        <!-- Form Details -->
+        <div class="glass-card rounded-2xl p-5 lg:p-6 space-y-5">
+            <div class="flex items-center gap-3 mb-2">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-purple-500 flex items-center justify-center">
+                    <i class="fas fa-file-alt text-white"></i>
+                </div>
+                <div>
+                    <h2 class="text-lg font-bold text-gray-800">Form Details</h2>
+                    <p class="text-xs text-gray-500">Configure the form settings</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <div class="lg:col-span-2">
+                    <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wider">Title</label>
+                    <input type="text" name="title" required placeholder="Form title..."
+                           class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition">
+                </div>
+                <div class="lg:col-span-2">
+                    <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wider">Description</label>
+                    <textarea name="description" rows="3" placeholder="Describe the form purpose..."
+                              class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition resize-y"></textarea>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wider">Status</label>
+                    <select name="status" class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition">
+                        <option value="saved">Saved (Draft)</option>
+                        <option value="published">Published</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wider">Outlet</label>
+                    <select name="outlet" class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition">
+                        <option value="">— Select Outlet —</option>
+                        {% for o in outlets %}
+                        <option value="{{ o.id }}">{{ o.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wider">Team</label>
+                    <select name="team" class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition">
+                        <option value="">— Select Team —</option>
+                        {% for t in teams %}
+                        <option value="{{ t.id }}">{{ t.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wider">Assigned To</label>
+                    <select name="assigned_to" class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition">
+                        <option value="">— Select Member —</option>
+                        {% for m in members %}
+                        <option value="{{ m.id }}">{{ m.full_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wider">Due Date</label>
+                    <input type="datetime-local" name="due_date"
+                           class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition">
+                </div>
+            </div>
+        </div>
+
+        <!-- Field Builder -->
+        <div class="glass-card rounded-2xl p-5 lg:p-6">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                        <i class="fas fa-puzzle-piece text-white"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-lg font-bold text-gray-800">Form Fields</h2>
+                        <p class="text-xs text-gray-500">Add and configure form fields</p>
+                    </div>
+                </div>
+                <button type="button" onclick="addField()" class="inline-flex items-center px-4 py-2 bg-primary-50 text-primary-600 text-xs font-semibold rounded-xl hover:bg-primary-100 transition">
+                    <i class="fas fa-plus mr-1.5"></i> Add Field
+                </button>
+            </div>
+
+            <div id="fieldContainer" class="space-y-3">
+                <!-- Field rows will be added here -->
+            </div>
+
+            <div id="emptyFieldState" class="text-center py-8 text-gray-400">
+                <i class="fas fa-puzzle-piece text-3xl mb-3"></i>
+                <p class="text-sm">No fields added yet. Click "Add Field" to start building.</p>
+            </div>
+        </div>
+
+        <!-- Submit -->
+        <div class="flex items-center justify-end gap-3">
+            <a href="{% url 'form_list' %}" class="px-5 py-2.5 bg-gray-100 text-gray-700 text-sm font-semibold rounded-xl hover:bg-gray-200 transition">
+                Cancel
+            </a>
+            <button type="submit" class="px-6 py-2.5 bg-gradient-to-r from-primary-600 to-purple-600 text-white text-sm font-semibold rounded-xl hover:shadow-lg hover:shadow-primary-500/25 transition-all hover:-translate-y-0.5">
+                <i class="fas fa-check mr-2"></i> Create Form
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let fieldIndex = 0;
+
+function addField() {
+    document.getElementById('emptyFieldState').style.display = 'none';
+    const container = document.getElementById('fieldContainer');
+    const row = document.createElement('div');
+    row.className = 'flex flex-col sm:flex-row items-stretch sm:items-center gap-2 p-4 bg-gray-50 rounded-xl fade-in field-row';
+    row.innerHTML = `
+        <div class="flex items-center gap-2 sm:w-8 text-gray-400 cursor-move">
+            <i class="fas fa-grip-vertical"></i>
+            <span class="text-xs font-bold">#${fieldIndex + 1}</span>
+        </div>
+        <input type="text" name="field_label[]" required placeholder="Field label..."
+               class="flex-1 px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition">
+        <select name="field_type[]"
+                class="px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition sm:w-36">
+            <option value="text">Text</option>
+            <option value="number">Number</option>
+            <option value="textarea">Textarea</option>
+            <option value="select">Select</option>
+            <option value="checkbox">Checkbox</option>
+            <option value="date">Date</option>
+        </select>
+        <label class="flex items-center gap-1.5 px-3 py-2 bg-white border border-gray-200 rounded-lg cursor-pointer hover:bg-primary-50 transition">
+            <input type="checkbox" name="field_required[]" value="${fieldIndex}" class="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500">
+            <span class="text-xs font-medium text-gray-600">Required</span>
+        </label>
+        <button type="button" onclick="removeField(this)" class="p-2 text-red-400 hover:text-red-600 transition flex-shrink-0">
+            <i class="fas fa-trash-alt"></i>
+        </button>
+    `;
+    container.appendChild(row);
+    fieldIndex++;
+}
+
+function removeField(btn) {
+    const container = document.getElementById('fieldContainer');
+    btn.closest('.field-row').remove();
+    if (container.children.length === 0) {
+        document.getElementById('emptyFieldState').style.display = 'block';
+    }
+    reindexFields();
+}
+
+function reindexFields() {
+    const rows = document.querySelectorAll('.field-row');
+    rows.forEach((row, i) => {
+        const numSpan = row.querySelector('span.text-xs');
+        if (numSpan) numSpan.textContent = `#${i + 1}`;
+    });
+}
+
+// Start with one field
+addField();
+</script>
+{% endblock %}

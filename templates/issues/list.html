@@ -1,0 +1,265 @@
+{% extends "base.html" %}
+{% load core_tags %}
+
+{% block title %}Issues{% endblock %}
+{% block page_title %}Issues{% endblock %}
+{% block page_subtitle %}Track and manage reported issues{% endblock %}
+
+{% block content %}
+<div class="fade-in space-y-6">
+
+    <!-- Top Bar: Search, Filters, View Toggle, Create -->
+    <div class="glass-card rounded-2xl p-4 lg:p-5">
+        <form method="get" action="{% url 'issue_list' %}" id="filterForm">
+            <!-- Row 1: Search + View Toggle + Create -->
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 mb-4">
+                <!-- Search -->
+                <div class="relative flex-1 max-w-md">
+                    <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+                    <input type="text" name="search" value="{{ filters.search }}" placeholder="Search issues..."
+                           class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition">
+                </div>
+
+                <div class="flex items-center gap-2 flex-wrap">
+                    <!-- View Toggle -->
+                    <div class="flex bg-gray-100 rounded-xl p-1">
+                        <a href="{% url 'issue_list' %}?view=list{% for k, v in filters.items %}{% if v and k != 'view' %}&{{ k }}={{ v }}{% endif %}{% endfor %}"
+                           class="px-3 py-1.5 rounded-lg text-xs font-semibold transition {% if view_mode == 'list' or not view_mode %}bg-white text-primary-700 shadow-sm{% else %}text-gray-500 hover:text-gray-700{% endif %}">
+                            <i class="fas fa-list mr-1"></i> List
+                        </a>
+                        <a href="{% url 'issue_board' %}"
+                           class="px-3 py-1.5 rounded-lg text-xs font-semibold transition text-gray-500 hover:text-gray-700">
+                            <i class="fas fa-columns mr-1"></i> Board
+                        </a>
+                    </div>
+
+                    <!-- Report Issue -->
+                    <a href="{% url 'issue_create' %}" class="inline-flex items-center px-4 py-2.5 bg-gradient-to-r from-primary-600 to-purple-600 text-white text-sm font-semibold rounded-xl hover:shadow-lg hover:shadow-primary-500/25 transition-all hover:-translate-y-0.5">
+                        <i class="fas fa-plus mr-2"></i> Report Issue
+                    </a>
+                </div>
+            </div>
+
+            <!-- Row 2: Filter Dropdowns -->
+            <div class="flex flex-wrap items-center gap-2">
+                <select name="status" onchange="this.form.submit()" class="text-xs bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition">
+                    <option value="">All Statuses</option>
+                    {% for val, label in status_choices %}
+                    <option value="{{ val }}" {% if filters.status == val %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+
+                <select name="priority" onchange="this.form.submit()" class="text-xs bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition">
+                    <option value="">All Priorities</option>
+                    {% for val, label in priority_choices %}
+                    <option value="{{ val }}" {% if filters.priority == val %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+
+                <select name="outlet" onchange="this.form.submit()" class="text-xs bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition">
+                    <option value="">All Outlets</option>
+                    {% for o in outlets %}
+                    <option value="{{ o.id }}" {% if filters.outlet == o.id|stringformat:"d" %}selected{% endif %}>{{ o.name }}</option>
+                    {% endfor %}
+                </select>
+
+                <select name="team" onchange="this.form.submit()" class="text-xs bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition">
+                    <option value="">All Teams</option>
+                    {% for t in teams %}
+                    <option value="{{ t.id }}" {% if filters.team == t.id|stringformat:"d" %}selected{% endif %}>{{ t.name }}</option>
+                    {% endfor %}
+                </select>
+
+                <select name="assigned_to" onchange="this.form.submit()" class="text-xs bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition">
+                    <option value="">All Members</option>
+                    {% for m in members %}
+                    <option value="{{ m.id }}" {% if filters.assigned_to == m.id|stringformat:"d" %}selected{% endif %}>{{ m.full_name }}</option>
+                    {% endfor %}
+                </select>
+
+                <input type="hidden" name="view" value="{{ view_mode }}">
+
+                {% if filters.status or filters.priority or filters.outlet or filters.team or filters.assigned_to or filters.search %}
+                <a href="{% url 'issue_list' %}" class="text-xs text-red-500 hover:text-red-700 font-medium ml-1 transition">
+                    <i class="fas fa-times mr-1"></i> Clear All
+                </a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+
+    {% if issues %}
+    <!-- Desktop Table -->
+    <div class="hidden lg:block glass-card rounded-2xl overflow-hidden">
+        <table class="w-full">
+            <thead>
+                <tr class="bg-gray-50/80 border-b border-gray-200">
+                    <th class="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Issue</th>
+                    <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+                    <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Priority</th>
+                    <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Assigned</th>
+                    <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Outlet</th>
+                    <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Due Date</th>
+                    <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Created</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+                {% for issue in issues %}
+                <tr class="hover:bg-primary-50/30 transition group">
+                    <td class="px-5 py-3.5">
+                        <a href="{% url 'issue_detail' issue.id %}" class="text-sm font-semibold text-gray-800 hover:text-primary-600 transition">
+                            {{ issue.title }}
+                        </a>
+                        {% if issue.tags %}
+                        <div class="flex flex-wrap gap-1 mt-1">
+                            {% for tag in issue.tags.split %}
+                            <span class="text-[10px] bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded-md font-medium">{{ tag }}</span>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </td>
+                    <td class="px-4 py-3.5">
+                        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold {{ issue.status|status_badge_class }}">
+                            {{ issue.get_status_display }}
+                        </span>
+                    </td>
+                    <td class="px-4 py-3.5">
+                        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold {{ issue.priority|priority_badge_class }}">
+                            {{ issue.get_priority_display }}
+                        </span>
+                    </td>
+                    <td class="px-4 py-3.5">
+                        <div class="flex -space-x-2">
+                            {% for person in issue.assignee_list %}
+                            <div class="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold border-2 border-white" style="background-color: {{ person.avatar_color }}" title="{{ person.full_name }}">
+                                {{ person.initials }}
+                            </div>
+                            {% empty %}
+                            <span class="text-xs text-gray-400 italic">Unassigned</span>
+                            {% endfor %}
+                        </div>
+                    </td>
+                    <td class="px-4 py-3.5">
+                        {% if issue.outlet %}
+                        <span class="text-xs text-gray-600 font-medium">{{ issue.outlet.name }}</span>
+                        {% else %}
+                        <span class="text-xs text-gray-400">&mdash;</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-4 py-3.5">
+                        {% if issue.start_date %}
+                        <span class="text-xs font-medium text-gray-600">
+                            <i class="fas fa-clock mr-1 text-gray-400"></i>
+                            {{ issue.start_date|date:"M d, Y" }}
+                        </span>
+                        {% else %}
+                        <span class="text-xs text-gray-400">&mdash;</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-4 py-3.5">
+                        <span class="text-xs text-gray-500">{{ issue.created_at|date:"M d, Y" }}</span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Mobile Cards -->
+    <div class="lg:hidden space-y-3">
+        {% for issue in issues %}
+        <a href="{% url 'issue_detail' issue.id %}" class="block glass-card rounded-xl p-4 hover-lift">
+            <div class="flex items-start justify-between mb-2">
+                <h3 class="text-sm font-semibold text-gray-800 flex-1 pr-2">{{ issue.title }}</h3>
+            </div>
+            <div class="flex flex-wrap gap-2 mb-3">
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold {{ issue.status|status_badge_class }}">
+                    {{ issue.get_status_display }}
+                </span>
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold {{ issue.priority|priority_badge_class }}">
+                    {{ issue.get_priority_display }}
+                </span>
+            </div>
+            <div class="flex items-center justify-between">
+                <div class="flex -space-x-1.5">
+                    {% for person in issue.assignee_list %}
+                    <div class="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold border-2 border-white" style="background-color: {{ person.avatar_color }}" title="{{ person.full_name }}">
+                        {{ person.initials }}
+                    </div>
+                    {% empty %}
+                    <span class="text-xs text-gray-400">Unassigned</span>
+                    {% endfor %}
+                </div>
+                <div class="flex items-center gap-3 text-xs text-gray-500">
+                    {% if issue.outlet %}
+                    <span><i class="fas fa-store mr-1"></i>{{ issue.outlet.name }}</span>
+                    {% endif %}
+                    {% if issue.start_date %}
+                    <span><i class="fas fa-clock mr-1"></i>{{ issue.start_date|date:"M d" }}</span>
+                    {% endif %}
+                </div>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    <div class="flex items-center justify-between glass-card rounded-2xl px-5 py-3">
+        <p class="text-xs text-gray-500">
+            Page <span class="font-semibold text-gray-800">{{ issues.number }}</span> of <span class="font-semibold text-gray-800">{{ issues.paginator.num_pages }}</span>
+        </p>
+        <div class="flex items-center gap-1">
+            {% if issues.has_previous %}
+            <a href="?page={{ issues.previous_page_number }}{% for k, v in filters.items %}{% if v %}&{{ k }}={{ v }}{% endif %}{% endfor %}"
+               class="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-medium text-gray-700 hover:bg-gray-50 transition">
+                <i class="fas fa-chevron-left mr-1"></i> Prev
+            </a>
+            {% endif %}
+
+            {% for num in issues.paginator.page_range %}
+                {% if issues.number == num %}
+                <span class="px-3 py-1.5 bg-primary-600 text-white rounded-lg text-xs font-bold">{{ num }}</span>
+                {% elif num > issues.number|add:"-3" and num < issues.number|add:"3" %}
+                <a href="?page={{ num }}{% for k, v in filters.items %}{% if v %}&{{ k }}={{ v }}{% endif %}{% endfor %}"
+                   class="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-medium text-gray-700 hover:bg-gray-50 transition">{{ num }}</a>
+                {% endif %}
+            {% endfor %}
+
+            {% if issues.has_next %}
+            <a href="?page={{ issues.next_page_number }}{% for k, v in filters.items %}{% if v %}&{{ k }}={{ v }}{% endif %}{% endfor %}"
+               class="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-medium text-gray-700 hover:bg-gray-50 transition">
+                Next <i class="fas fa-chevron-right ml-1"></i>
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    {% else %}
+    <!-- Empty State -->
+    <div class="glass-card rounded-2xl p-12 text-center fade-in">
+        <div class="w-20 h-20 bg-primary-50 rounded-full flex items-center justify-center mx-auto mb-5">
+            <i class="fas fa-bug text-3xl text-primary-400"></i>
+        </div>
+        <h3 class="text-lg font-bold text-gray-800 mb-2">No issues found</h3>
+        <p class="text-sm text-gray-500 mb-6 max-w-sm mx-auto">
+            {% if filters.search or filters.status or filters.priority %}
+                No issues match your current filters. Try adjusting them or clear all filters.
+            {% else %}
+                All clear! No issues have been reported yet.
+            {% endif %}
+        </p>
+        <div class="flex items-center justify-center gap-3">
+            {% if filters.search or filters.status or filters.priority %}
+            <a href="{% url 'issue_list' %}" class="inline-flex items-center px-4 py-2.5 bg-gray-100 text-gray-700 text-sm font-semibold rounded-xl hover:bg-gray-200 transition">
+                <i class="fas fa-times mr-2"></i> Clear Filters
+            </a>
+            {% endif %}
+            <a href="{% url 'issue_create' %}" class="inline-flex items-center px-5 py-2.5 bg-gradient-to-r from-primary-600 to-purple-600 text-white text-sm font-semibold rounded-xl hover:shadow-lg hover:shadow-primary-500/25 transition-all">
+                <i class="fas fa-plus mr-2"></i> Report Issue
+            </a>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

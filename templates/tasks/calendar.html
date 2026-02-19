@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% load core_tags %}
+
+{% block title %}Task Calendar{% endblock %}
+{% block page_title %}Task Calendar{% endblock %}
+{% block page_subtitle %}Visual timeline of all tasks{% endblock %}
+
+{% block extra_css %}
+<style>
+    .fc { font-family: 'Inter', sans-serif; }
+    .fc .fc-toolbar-title { font-size: 1.25rem; font-weight: 700; color: #1f2937; }
+    .fc .fc-button { background: #6366f1; border-color: #6366f1; font-weight: 500; font-size: 0.875rem; }
+    .fc .fc-button:hover { background: #4f46e5; border-color: #4f46e5; }
+    .fc .fc-button-active { background: #4338ca !important; border-color: #4338ca !important; }
+    .fc .fc-daygrid-day-number { color: #374151; font-weight: 500; }
+    .fc .fc-col-header-cell-cushion { color: #6b7280; font-weight: 600; text-transform: uppercase; font-size: 0.75rem; }
+    .fc .fc-event { border-radius: 6px; padding: 2px 6px; font-size: 0.8rem; font-weight: 500; border: none; }
+    .fc .fc-daygrid-day.fc-day-today { background: #eef2ff; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+    <!-- View Toggle -->
+    <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center space-x-2">
+            <a href="{% url 'task_list' %}" class="px-3 py-2 text-sm font-medium rounded-lg text-gray-600 hover:bg-gray-100 transition">
+                <i class="fas fa-list mr-1"></i> List
+            </a>
+            <a href="{% url 'task_board' %}" class="px-3 py-2 text-sm font-medium rounded-lg text-gray-600 hover:bg-gray-100 transition">
+                <i class="fas fa-columns mr-1"></i> Board
+            </a>
+            <a href="{% url 'task_calendar' %}" class="px-3 py-2 text-sm font-medium rounded-lg bg-primary-100 text-primary-700">
+                <i class="fas fa-calendar mr-1"></i> Calendar
+            </a>
+        </div>
+        <a href="{% url 'task_create' %}" class="px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-700 transition shadow-sm">
+            <i class="fas fa-plus mr-1"></i> Create Task
+        </a>
+    </div>
+
+    <!-- Calendar Container -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+        <div id="calendar"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.9/index.global.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const calendarEl = document.getElementById('calendar');
+    const events = {{ events_json|safe }};
+
+    const calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,timeGridWeek,listWeek'
+        },
+        events: events.map(e => ({
+            id: e.id,
+            title: e.title,
+            start: e.start,
+            backgroundColor: e.color,
+            borderColor: e.color,
+            extendedProps: { status: e.status, priority: e.priority }
+        })),
+        eventClick: function(info) {
+            window.location.href = '/tasks/' + info.event.id + '/';
+        },
+        eventDidMount: function(info) {
+            info.el.title = info.event.title + ' (' + (info.event.extendedProps.priority || '') + ')';
+        },
+        height: 'auto',
+        dayMaxEvents: 3,
+    });
+    calendar.render();
+});
+</script>
+{% endblock %}

@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% load core_tags %}
+
+{% block title %}Reports{% endblock %}
+{% block page_title %}Reports{% endblock %}
+{% block page_subtitle %}Analytics and reporting dashboard{% endblock %}
+
+{% block content %}
+<div class="fade-in space-y-6">
+
+    <!-- Report Type Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+
+        <!-- Outlet Tasks -->
+        <a href="{% url 'report_outlet_tasks' %}" class="glass-card rounded-2xl p-6 hover-lift group block">
+            <div class="flex items-start gap-4">
+                <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+                    <i class="fas fa-store text-white text-lg"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <h3 class="text-sm font-bold text-gray-800 group-hover:text-primary-600 transition">Outlet Tasks</h3>
+                    <p class="text-xs text-gray-500 mt-1">Task breakdown by outlet with completion and overdue stats</p>
+                </div>
+                <i class="fas fa-chevron-right text-gray-300 group-hover:text-primary-400 transition mt-1"></i>
+            </div>
+        </a>
+
+        <!-- Outlet Issues -->
+        <a href="{% url 'report_outlet_issues' %}" class="glass-card rounded-2xl p-6 hover-lift group block">
+            <div class="flex items-start gap-4">
+                <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-red-500 to-pink-500 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+                    <i class="fas fa-exclamation-triangle text-white text-lg"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <h3 class="text-sm font-bold text-gray-800 group-hover:text-primary-600 transition">Outlet Issues</h3>
+                    <p class="text-xs text-gray-500 mt-1">Issue tracking breakdown by outlet with resolution status</p>
+                </div>
+                <i class="fas fa-chevron-right text-gray-300 group-hover:text-primary-400 transition mt-1"></i>
+            </div>
+        </a>
+
+        <!-- Employee Tasks -->
+        <a href="{% url 'report_employee_tasks' %}" class="glass-card rounded-2xl p-6 hover-lift group block">
+            <div class="flex items-start gap-4">
+                <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+                    <i class="fas fa-user-check text-white text-lg"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <h3 class="text-sm font-bold text-gray-800 group-hover:text-primary-600 transition">Employee Tasks</h3>
+                    <p class="text-xs text-gray-500 mt-1">Per-employee task statistics including points and completion rates</p>
+                </div>
+                <i class="fas fa-chevron-right text-gray-300 group-hover:text-primary-400 transition mt-1"></i>
+            </div>
+        </a>
+
+        <!-- Employee Issues -->
+        <a href="{% url 'report_employee_issues' %}" class="glass-card rounded-2xl p-6 hover-lift group block">
+            <div class="flex items-start gap-4">
+                <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+                    <i class="fas fa-user-shield text-white text-lg"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <h3 class="text-sm font-bold text-gray-800 group-hover:text-primary-600 transition">Employee Issues</h3>
+                    <p class="text-xs text-gray-500 mt-1">Per-employee issue resolution and tracking statistics</p>
+                </div>
+                <i class="fas fa-chevron-right text-gray-300 group-hover:text-primary-400 transition mt-1"></i>
+            </div>
+        </a>
+
+        <!-- Backlog -->
+        <a href="{% url 'report_backlog' %}" class="glass-card rounded-2xl p-6 hover-lift group block">
+            <div class="flex items-start gap-4">
+                <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-violet-500 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+                    <i class="fas fa-clock text-white text-lg"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <h3 class="text-sm font-bold text-gray-800 group-hover:text-primary-600 transition">Backlog Report</h3>
+                    <p class="text-xs text-gray-500 mt-1">Overdue tasks requiring attention with priority levels</p>
+                </div>
+                <i class="fas fa-chevron-right text-gray-300 group-hover:text-primary-400 transition mt-1"></i>
+            </div>
+        </a>
+
+        <!-- Points Allocation -->
+        <a href="{% url 'report_points' %}" class="glass-card rounded-2xl p-6 hover-lift group block">
+            <div class="flex items-start gap-4">
+                <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-yellow-500 to-orange-500 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+                    <i class="fas fa-trophy text-white text-lg"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <h3 class="text-sm font-bold text-gray-800 group-hover:text-primary-600 transition">Points Allocation</h3>
+                    <p class="text-xs text-gray-500 mt-1">Employee leaderboard ranked by points and tasks completed</p>
+                </div>
+                <i class="fas fa-chevron-right text-gray-300 group-hover:text-primary-400 transition mt-1"></i>
+            </div>
+        </a>
+
+    </div>
+</div>
+{% endblock %}

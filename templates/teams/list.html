@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% load core_tags %}
+
+{% block title %}Teams{% endblock %}
+{% block page_title %}Teams{% endblock %}
+{% block page_subtitle %}Manage your teams{% endblock %}
+
+{% block content %}
+<div class="fade-in space-y-6">
+
+    <!-- Top Bar -->
+    <div class="glass-card rounded-2xl p-4 lg:p-5">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div class="relative flex-1 max-w-md">
+                <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+                <input type="text" id="teamSearch" placeholder="Search teams..." oninput="filterTeams()"
+                       class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition">
+            </div>
+            <a href="{% url 'team_create' %}" class="inline-flex items-center px-4 py-2.5 bg-gradient-to-r from-primary-600 to-purple-600 text-white text-sm font-semibold rounded-xl hover:shadow-lg hover:shadow-primary-500/25 transition-all hover:-translate-y-0.5">
+                <i class="fas fa-plus mr-2"></i> Add Team
+            </a>
+        </div>
+    </div>
+
+    {% if teams %}
+    <!-- Team Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4" id="teamGrid">
+        {% for team in teams %}
+        <div class="glass-card rounded-2xl p-5 hover-lift fade-in team-card" data-name="{{ team.name|lower }}">
+            <div class="flex items-start justify-between mb-3">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style="background-color: {{ team.color|default:'#6366f1' }}20;">
+                        <div class="w-4 h-4 rounded-full" style="background-color: {{ team.color|default:'#6366f1' }};"></div>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-bold text-gray-800">{{ team.name }}</h3>
+                        {% if team.description %}
+                        <p class="text-xs text-gray-500 mt-0.5 line-clamp-1">{{ team.description|truncatewords:10 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-between pt-3 border-t border-gray-100">
+                <div class="flex items-center gap-1.5 text-xs text-gray-500">
+                    <i class="fas fa-users"></i>
+                    <span>{{ team.member_count|default:"0" }} members</span>
+                </div>
+                <a href="{% url 'team_edit' team.id %}" class="inline-flex items-center px-3 py-1.5 bg-primary-50 text-primary-600 text-xs font-semibold rounded-lg hover:bg-primary-100 transition">
+                    <i class="fas fa-pen mr-1.5"></i> Edit
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% else %}
+    <div class="glass-card rounded-2xl p-12 text-center fade-in">
+        <div class="w-20 h-20 bg-primary-50 rounded-full flex items-center justify-center mx-auto mb-5">
+            <i class="fas fa-people-arrows text-3xl text-primary-400"></i>
+        </div>
+        <h3 class="text-lg font-bold text-gray-800 mb-2">No teams yet</h3>
+        <p class="text-sm text-gray-500 mb-6 max-w-sm mx-auto">Create your first team to organize and manage members.</p>
+        <a href="{% url 'team_create' %}" class="inline-flex items-center px-5 py-2.5 bg-gradient-to-r from-primary-600 to-purple-600 text-white text-sm font-semibold rounded-xl hover:shadow-lg hover:shadow-primary-500/25 transition-all">
+            <i class="fas fa-plus mr-2"></i> Add Team
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function filterTeams() {
+    const query = document.getElementById('teamSearch').value.toLowerCase();
+    document.querySelectorAll('.team-card').forEach(card => {
+        const name = card.dataset.name;
+        card.style.display = name.includes(query) ? '' : 'none';
+    });
+}
+</script>
+{% endblock %}

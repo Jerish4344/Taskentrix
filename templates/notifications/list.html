@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% load core_tags %}
+
+{% block title %}Notifications{% endblock %}
+{% block page_title %}Notifications{% endblock %}
+{% block page_subtitle %}Stay updated with your activity{% endblock %}
+
+{% block content %}
+<div class="space-y-4 fade-in">
+    <div class="flex items-center justify-between">
+        <h2 class="text-lg font-semibold text-gray-800">All Notifications</h2>
+        <a href="{% url 'mark_all_read' %}" class="px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-700 transition">
+            <i class="fas fa-check-double mr-1"></i> Mark All Read
+        </a>
+    </div>
+
+    {% if notifications %}
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 divide-y divide-gray-100">
+        {% for n in notifications %}
+        <div class="p-4 flex items-start space-x-3 {% if not n.is_read %}bg-indigo-50/50{% endif %} hover:bg-gray-50 transition">
+            <div class="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center
+                {% if n.notification_type == 'task_assigned' %}bg-blue-100 text-blue-600
+                {% elif n.notification_type == 'task_completed' %}bg-green-100 text-green-600
+                {% elif n.notification_type == 'task_overdue' %}bg-red-100 text-red-600
+                {% elif n.notification_type == 'issue_created' %}bg-orange-100 text-orange-600
+                {% elif n.notification_type == 'issue_resolved' %}bg-emerald-100 text-emerald-600
+                {% elif n.notification_type == 'form_response' %}bg-purple-100 text-purple-600
+                {% elif n.notification_type == 'ai_suggestion' %}bg-pink-100 text-pink-600
+                {% elif n.notification_type == 'reminder' %}bg-yellow-100 text-yellow-600
+                {% else %}bg-gray-100 text-gray-600{% endif %}">
+                <i class="fas {% if n.notification_type == 'task_assigned' %}fa-clipboard-list
+                    {% elif n.notification_type == 'task_completed' %}fa-check-circle
+                    {% elif n.notification_type == 'task_overdue' %}fa-clock
+                    {% elif n.notification_type == 'issue_created' %}fa-exclamation-triangle
+                    {% elif n.notification_type == 'issue_resolved' %}fa-check
+                    {% elif n.notification_type == 'form_response' %}fa-file-alt
+                    {% elif n.notification_type == 'ai_suggestion' %}fa-robot
+                    {% elif n.notification_type == 'reminder' %}fa-bell
+                    {% else %}fa-info-circle{% endif %} text-sm"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+                <div class="flex items-center justify-between">
+                    <a href="{{ n.link|default:'#' }}" class="text-sm font-semibold text-gray-800 hover:text-primary-600 transition">{{ n.title }}</a>
+                    {% if not n.is_read %}
+                    <span class="w-2 h-2 bg-primary-500 rounded-full flex-shrink-0"></span>
+                    {% endif %}
+                </div>
+                <p class="text-sm text-gray-600 mt-0.5">{{ n.message }}</p>
+                <p class="text-xs text-gray-400 mt-1">{{ n.created_at|timesince }} ago</p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if notifications.has_other_pages %}
+    <div class="flex items-center justify-center space-x-2 mt-4">
+        {% if notifications.has_previous %}
+        <a href="?page={{ notifications.previous_page_number }}" class="px-3 py-2 bg-white border rounded-lg text-sm hover:bg-gray-50">Previous</a>
+        {% endif %}
+        <span class="px-3 py-2 text-sm text-gray-600">Page {{ notifications.number }} of {{ notifications.paginator.num_pages }}</span>
+        {% if notifications.has_next %}
+        <a href="?page={{ notifications.next_page_number }}" class="px-3 py-2 bg-white border rounded-lg text-sm hover:bg-gray-50">Next</a>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
+        <i class="fas fa-bell-slash text-4xl text-gray-300 mb-3"></i>
+        <p class="text-gray-500 font-medium">No notifications yet</p>
+        <p class="text-gray-400 text-sm mt-1">You'll see updates about tasks, issues, and more here.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

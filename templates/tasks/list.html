@@ -1,0 +1,323 @@
+{% extends "base.html" %}
+{% load core_tags %}
+
+{% block title %}Tasks{% endblock %}
+{% block page_title %}Tasks{% endblock %}
+{% block page_subtitle %}Manage all tasks{% endblock %}
+
+{% block content %}
+<div class="fade-in space-y-6">
+
+    <!-- Top Bar: Search, Filters, View Toggle, Create -->
+    <div class="glass-card rounded-2xl p-4 lg:p-5">
+        <form method="get" action="{% url 'task_list' %}" id="filterForm">
+            <!-- Row 1: Search + View Toggle + Create -->
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 mb-4">
+                <!-- Search -->
+                <div class="relative flex-1 max-w-md">
+                    <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+                    <input type="text" name="search" value="{{ filters.search }}" placeholder="Search tasks..."
+                           class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition">
+                </div>
+
+                <div class="flex items-center gap-2 flex-wrap">
+                    <!-- View Toggle -->
+                    <div class="flex bg-gray-100 rounded-xl p-1">
+                        <a href="{% url 'task_list' %}?view=list{% for k, v in filters.items %}{% if v and k != 'view' %}&{{ k }}={{ v }}{% endif %}{% endfor %}"
+                           class="px-3 py-1.5 rounded-lg text-xs font-semibold transition {% if view_mode == 'list' %}bg-white text-primary-700 shadow-sm{% else %}text-gray-500 hover:text-gray-700{% endif %}">
+                            <i class="fas fa-list mr-1"></i> List
+                        </a>
+                        <a href="{% url 'task_board' %}"
+                           class="px-3 py-1.5 rounded-lg text-xs font-semibold transition text-gray-500 hover:text-gray-700">
+                            <i class="fas fa-columns mr-1"></i> Board
+                        </a>
+                        <a href="{% url 'task_calendar' %}"
+                           class="px-3 py-1.5 rounded-lg text-xs font-semibold transition text-gray-500 hover:text-gray-700">
+                            <i class="fas fa-calendar-alt mr-1"></i> Calendar
+                        </a>
+                    </div>
+
+                    <!-- Create Task -->
+                    <a href="{% url 'task_create' %}" class="inline-flex items-center px-4 py-2.5 bg-gradient-to-r from-primary-600 to-purple-600 text-white text-sm font-semibold rounded-xl hover:shadow-lg hover:shadow-primary-500/25 transition-all hover:-translate-y-0.5">
+                        <i class="fas fa-plus mr-2"></i> Create Task
+                    </a>
+                </div>
+            </div>
+
+            <!-- Row 2: Filter Dropdowns -->
+            <div class="flex flex-wrap items-center gap-2">
+                <select name="status" onchange="this.form.submit()" class="text-xs bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition">
+                    <option value="">All Statuses</option>
+                    {% for val, label in status_choices %}
+                    <option value="{{ val }}" {% if filters.status == val %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+
+                <select name="priority" onchange="this.form.submit()" class="text-xs bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition">
+                    <option value="">All Priorities</option>
+                    {% for val, label in priority_choices %}
+                    <option value="{{ val }}" {% if filters.priority == val %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+
+                <select name="category" onchange="this.form.submit()" class="text-xs bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition">
+                    <option value="">All Categories</option>
+                    {% for cat in categories %}
+                    <option value="{{ cat.id }}" {% if filters.category == cat.id|stringformat:"d" %}selected{% endif %}>{{ cat.icon }} {{ cat.name }}</option>
+                    {% endfor %}
+                </select>
+
+                <select name="project" onchange="this.form.submit()" class="text-xs bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition">
+                    <option value="">All Projects</option>
+                    {% for proj in projects %}
+                    <option value="{{ proj.id }}" {% if filters.project == proj.id|stringformat:"d" %}selected{% endif %}>{{ proj.name }}</option>
+                    {% endfor %}
+                </select>
+
+                <select name="team" onchange="this.form.submit()" class="text-xs bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition">
+                    <option value="">All Teams</option>
+                    {% for t in teams %}
+                    <option value="{{ t.id }}" {% if filters.team == t.id|stringformat:"d" %}selected{% endif %}>{{ t.name }}</option>
+                    {% endfor %}
+                </select>
+
+                <select name="assigned_to" onchange="this.form.submit()" class="text-xs bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition">
+                    <option value="">All Members</option>
+                    {% for m in members %}
+                    <option value="{{ m.id }}" {% if filters.assigned_to == m.id|stringformat:"d" %}selected{% endif %}>{{ m.full_name }}</option>
+                    {% endfor %}
+                </select>
+
+                <input type="hidden" name="view" value="{{ view_mode }}">
+
+                {% if filters.status or filters.priority or filters.category or filters.project or filters.team or filters.assigned_to or filters.search %}
+                <a href="{% url 'task_list' %}" class="text-xs text-red-500 hover:text-red-700 font-medium ml-1 transition">
+                    <i class="fas fa-times mr-1"></i> Clear All
+                </a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+
+    {% if tasks %}
+    <!-- Desktop Table -->
+    <div class="hidden lg:block glass-card rounded-2xl overflow-hidden">
+        <table class="w-full">
+            <thead>
+                <tr class="bg-gray-50/80 border-b border-gray-200">
+                    <th class="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Task</th>
+                    <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+                    <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Priority</th>
+                    <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Assigned</th>
+                    <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Project</th>
+                    <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Category</th>
+                    <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Due Date</th>
+                    <th class="text-center px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider w-12"><i class="fas fa-star text-yellow-400"></i></th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+                {% for task in tasks %}
+                <tr class="hover:bg-primary-50/30 transition group">
+                    <td class="px-5 py-3.5">
+                        <a href="{% url 'task_detail' task.id %}" class="text-sm font-semibold text-gray-800 hover:text-primary-600 transition">
+                            {{ task.title }}
+                        </a>
+                        {% if task.subtask_count %}
+                        <span class="ml-2 text-xs text-gray-400"><i class="fas fa-sitemap mr-0.5"></i> {{ task.completed_subtask_count }}/{{ task.subtask_count }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-4 py-3.5">
+                        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold {{ task.status|status_badge_class }}">
+                            {{ task.get_status_display }}
+                        </span>
+                    </td>
+                    <td class="px-4 py-3.5">
+                        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold {{ task.priority|priority_badge_class }}">
+                            {{ task.get_priority_display }}
+                        </span>
+                    </td>
+                    <td class="px-4 py-3.5">
+                        <div class="flex -space-x-2">
+                            {% for person in task.assignee_list %}
+                            <div class="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold border-2 border-white" style="background-color: {{ person.avatar_color }}" title="{{ person.full_name }}">
+                                {{ person.initials }}
+                            </div>
+                            {% empty %}
+                            <span class="text-xs text-gray-400 italic">Unassigned</span>
+                            {% endfor %}
+                        </div>
+                    </td>
+                    <td class="px-4 py-3.5">
+                        {% if task.project %}
+                        <span class="text-xs text-gray-600 font-medium">{{ task.project.name }}</span>
+                        {% else %}
+                        <span class="text-xs text-gray-400">&mdash;</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-4 py-3.5">
+                        {% if task.category %}
+                        <span class="text-xs text-gray-600">{{ task.category.icon }} {{ task.category.name }}</span>
+                        {% else %}
+                        <span class="text-xs text-gray-400">&mdash;</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-4 py-3.5">
+                        {% if task.due_date %}
+                        <span class="text-xs font-medium {% if task.is_overdue %}text-red-600{% else %}text-gray-600{% endif %}">
+                            <i class="fas fa-clock mr-1 {% if task.is_overdue %}text-red-400{% else %}text-gray-400{% endif %}"></i>
+                            {{ task.due_date|date:"M d, Y" }}
+                        </span>
+                        {% else %}
+                        <span class="text-xs text-gray-400">&mdash;</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-4 py-3.5 text-center">
+                        <button onclick="toggleStar({{ task.id }}, this)" class="text-lg transition hover:scale-110 {% if task.is_starred %}text-yellow-400{% else %}text-gray-300 hover:text-yellow-400{% endif %}">
+                            <i class="{% if task.is_starred %}fas{% else %}far{% endif %} fa-star"></i>
+                        </button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Mobile Cards -->
+    <div class="lg:hidden space-y-3">
+        {% for task in tasks %}
+        <a href="{% url 'task_detail' task.id %}" class="block glass-card rounded-xl p-4 hover-lift">
+            <div class="flex items-start justify-between mb-2">
+                <h3 class="text-sm font-semibold text-gray-800 flex-1 pr-2">{{ task.title }}</h3>
+                <span class="{% if task.is_starred %}text-yellow-400{% else %}text-gray-300{% endif %}">
+                    <i class="{% if task.is_starred %}fas{% else %}far{% endif %} fa-star"></i>
+                </span>
+            </div>
+            <div class="flex flex-wrap gap-2 mb-3">
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold {{ task.status|status_badge_class }}">
+                    {{ task.get_status_display }}
+                </span>
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold {{ task.priority|priority_badge_class }}">
+                    {{ task.get_priority_display }}
+                </span>
+                {% if task.category %}
+                <span class="text-xs text-gray-500">{{ task.category.icon }} {{ task.category.name }}</span>
+                {% endif %}
+            </div>
+            <div class="flex items-center justify-between">
+                <div class="flex -space-x-1.5">
+                    {% for person in task.assignee_list %}
+                    <div class="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold border-2 border-white" style="background-color: {{ person.avatar_color }}" title="{{ person.full_name }}">
+                        {{ person.initials }}
+                    </div>
+                    {% empty %}
+                    <span class="text-xs text-gray-400">Unassigned</span>
+                    {% endfor %}
+                </div>
+                <div class="flex items-center gap-3 text-xs text-gray-500">
+                    {% if task.project %}
+                    <span><i class="fas fa-project-diagram mr-1"></i>{{ task.project.name }}</span>
+                    {% endif %}
+                    {% if task.due_date %}
+                    <span class="{% if task.is_overdue %}text-red-500{% endif %}">
+                        <i class="fas fa-clock mr-1"></i>{{ task.due_date|date:"M d" }}
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    <div class="flex items-center justify-between glass-card rounded-2xl px-5 py-3">
+        <p class="text-xs text-gray-500">
+            Page <span class="font-semibold text-gray-800">{{ tasks.number }}</span> of <span class="font-semibold text-gray-800">{{ tasks.paginator.num_pages }}</span>
+        </p>
+        <div class="flex items-center gap-1">
+            {% if tasks.has_previous %}
+            <a href="?page={{ tasks.previous_page_number }}{% for k, v in filters.items %}{% if v %}&{{ k }}={{ v }}{% endif %}{% endfor %}"
+               class="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-medium text-gray-700 hover:bg-gray-50 transition">
+                <i class="fas fa-chevron-left mr-1"></i> Prev
+            </a>
+            {% endif %}
+
+            {% for num in tasks.paginator.page_range %}
+                {% if tasks.number == num %}
+                <span class="px-3 py-1.5 bg-primary-600 text-white rounded-lg text-xs font-bold">{{ num }}</span>
+                {% elif num > tasks.number|add:"-3" and num < tasks.number|add:"3" %}
+                <a href="?page={{ num }}{% for k, v in filters.items %}{% if v %}&{{ k }}={{ v }}{% endif %}{% endfor %}"
+                   class="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-medium text-gray-700 hover:bg-gray-50 transition">{{ num }}</a>
+                {% endif %}
+            {% endfor %}
+
+            {% if tasks.has_next %}
+            <a href="?page={{ tasks.next_page_number }}{% for k, v in filters.items %}{% if v %}&{{ k }}={{ v }}{% endif %}{% endfor %}"
+               class="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-medium text-gray-700 hover:bg-gray-50 transition">
+                Next <i class="fas fa-chevron-right ml-1"></i>
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    {% else %}
+    <!-- Empty State -->
+    <div class="glass-card rounded-2xl p-12 text-center fade-in">
+        <div class="w-20 h-20 bg-primary-50 rounded-full flex items-center justify-center mx-auto mb-5">
+            <i class="fas fa-clipboard-list text-3xl text-primary-400"></i>
+        </div>
+        <h3 class="text-lg font-bold text-gray-800 mb-2">No tasks found</h3>
+        <p class="text-sm text-gray-500 mb-6 max-w-sm mx-auto">
+            {% if filters.search or filters.status or filters.priority %}
+                No tasks match your current filters. Try adjusting them or clear all filters.
+            {% else %}
+                Get started by creating your first task.
+            {% endif %}
+        </p>
+        <div class="flex items-center justify-center gap-3">
+            {% if filters.search or filters.status or filters.priority %}
+            <a href="{% url 'task_list' %}" class="inline-flex items-center px-4 py-2.5 bg-gray-100 text-gray-700 text-sm font-semibold rounded-xl hover:bg-gray-200 transition">
+                <i class="fas fa-times mr-2"></i> Clear Filters
+            </a>
+            {% endif %}
+            <a href="{% url 'task_create' %}" class="inline-flex items-center px-5 py-2.5 bg-gradient-to-r from-primary-600 to-purple-600 text-white text-sm font-semibold rounded-xl hover:shadow-lg hover:shadow-primary-500/25 transition-all">
+                <i class="fas fa-plus mr-2"></i> Create Task
+            </a>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function toggleStar(taskId, btn) {
+    fetch(`/tasks/api/${taskId}/star/`, {
+        method: 'POST',
+        headers: {'X-CSRFToken': getCookie('csrftoken')},
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            const icon = btn.querySelector('i');
+            if (data.is_starred) {
+                btn.classList.remove('text-gray-300');
+                btn.classList.add('text-yellow-400');
+                icon.classList.remove('far');
+                icon.classList.add('fas');
+            } else {
+                btn.classList.remove('text-yellow-400');
+                btn.classList.add('text-gray-300');
+                icon.classList.remove('fas');
+                icon.classList.add('far');
+            }
+        }
+    });
+}
+
+function getCookie(name) {
+    let v = document.cookie.match('(^|;) ?' + name + '=([^;]*)(;|$)');
+    return v ? v[2] : null;
+}
+</script>
+{% endblock %}

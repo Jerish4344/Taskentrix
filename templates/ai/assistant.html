@@ -1,0 +1,256 @@
+{% extends "base.html" %}
+
+{% block title %}AI Assistant{% endblock %}
+{% block page_title %}AI Assistant{% endblock %}
+{% block page_subtitle %}Ask questions, get task suggestions, and analyze your workflow{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Chat Panel -->
+        <div class="lg:col-span-2">
+            <div class="bg-white rounded-xl border border-gray-100 flex flex-col" style="height: 70vh;">
+                <!-- Chat Header -->
+                <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+                            <i class="fas fa-robot text-white"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-semibold text-gray-800">TaskAI Assistant</h3>
+                            <p class="text-xs text-green-500"><i class="fas fa-circle text-[8px] mr-1"></i>Online</p>
+                        </div>
+                    </div>
+                    <button onclick="clearChat()" class="text-xs text-gray-400 hover:text-gray-600 transition">
+                        <i class="fas fa-eraser mr-1"></i>Clear Chat
+                    </button>
+                </div>
+
+                <!-- Chat Messages -->
+                <div id="chatMessages" class="flex-1 overflow-y-auto p-6 space-y-4">
+                    <!-- Welcome message -->
+                    <div class="flex items-start space-x-3">
+                        <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0">
+                            <i class="fas fa-robot text-white text-xs"></i>
+                        </div>
+                        <div class="bg-gray-50 rounded-xl rounded-tl-none p-4 max-w-lg">
+                            <p class="text-sm text-gray-700">Hello! I'm your AI assistant for task management. I can help you with:</p>
+                            <ul class="mt-2 space-y-1 text-sm text-gray-600">
+                                <li><i class="fas fa-lightbulb text-yellow-500 mr-2"></i>Suggest new tasks based on your workload</li>
+                                <li><i class="fas fa-chart-line text-blue-500 mr-2"></i>Analyze priorities and workload</li>
+                                <li><i class="fas fa-file-alt text-green-500 mr-2"></i>Generate task summaries</li>
+                                <li><i class="fas fa-list-check text-purple-500 mr-2"></i>Break tasks into subtasks</li>
+                                <li><i class="fas fa-question-circle text-indigo-500 mr-2"></i>Answer questions about productivity</li>
+                            </ul>
+                            <p class="mt-2 text-sm text-gray-500">Try one of the quick actions on the right, or type a message below!</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Input Area -->
+                <div class="px-6 py-4 border-t border-gray-100">
+                    <form id="chatForm" onsubmit="sendMessage(event)" class="flex items-center space-x-3">
+                        <input type="text" id="chatInput"
+                            class="flex-1 px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                            placeholder="Ask me anything about your tasks..."
+                            autocomplete="off">
+                        <button type="submit" id="sendBtn"
+                            class="px-5 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition shadow-sm">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar: Quick Actions & Suggestions -->
+        <div class="space-y-6">
+            <!-- Quick Actions -->
+            <div class="bg-white rounded-xl border border-gray-100 p-5">
+                <h4 class="text-sm font-semibold text-gray-800 mb-3">
+                    <i class="fas fa-bolt text-yellow-500 mr-2"></i>Quick Actions
+                </h4>
+                <div class="space-y-2">
+                    <button onclick="quickAction('suggest')" class="w-full text-left px-4 py-3 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 text-sm font-medium transition flex items-center">
+                        <i class="fas fa-lightbulb mr-3 text-blue-500"></i>Suggest New Tasks
+                    </button>
+                    <button onclick="quickAction('priority')" class="w-full text-left px-4 py-3 rounded-xl bg-orange-50 hover:bg-orange-100 text-orange-700 text-sm font-medium transition flex items-center">
+                        <i class="fas fa-sort-amount-up mr-3 text-orange-500"></i>Priority Analysis
+                    </button>
+                    <button onclick="quickAction('report')" class="w-full text-left px-4 py-3 rounded-xl bg-green-50 hover:bg-green-100 text-green-700 text-sm font-medium transition flex items-center">
+                        <i class="fas fa-chart-bar mr-3 text-green-500"></i>Generate Report
+                    </button>
+                    <button onclick="quickAction('tips')" class="w-full text-left px-4 py-3 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-700 text-sm font-medium transition flex items-center">
+                        <i class="fas fa-magic mr-3 text-purple-500"></i>Productivity Tips
+                    </button>
+                </div>
+            </div>
+
+            <!-- Sample Questions -->
+            <div class="bg-white rounded-xl border border-gray-100 p-5">
+                <h4 class="text-sm font-semibold text-gray-800 mb-3">
+                    <i class="fas fa-comment-dots text-indigo-500 mr-2"></i>Try Asking
+                </h4>
+                <div class="space-y-2">
+                    <button onclick="askQuestion('What tasks should I focus on today?')"
+                        class="w-full text-left px-3 py-2 text-xs text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition">
+                        "What tasks should I focus on today?"
+                    </button>
+                    <button onclick="askQuestion('Suggest tasks for textile quality control')"
+                        class="w-full text-left px-3 py-2 text-xs text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition">
+                        "Suggest tasks for textile quality control"
+                    </button>
+                    <button onclick="askQuestion('How can I improve team productivity?')"
+                        class="w-full text-left px-3 py-2 text-xs text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition">
+                        "How can I improve team productivity?"
+                    </button>
+                    <button onclick="askQuestion('Break down the inventory management task')"
+                        class="w-full text-left px-3 py-2 text-xs text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition">
+                        "Break down the inventory management task"
+                    </button>
+                </div>
+            </div>
+
+            <!-- AI Info -->
+            <div class="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl border border-indigo-100 p-5">
+                <div class="flex items-center space-x-2 mb-2">
+                    <i class="fas fa-info-circle text-indigo-500"></i>
+                    <h4 class="text-sm font-semibold text-indigo-700">About TaskAI</h4>
+                </div>
+                <p class="text-xs text-indigo-600 leading-relaxed">
+                    TaskAI uses intelligent algorithms to analyze your task patterns,
+                    predict priorities, and provide actionable suggestions for your
+                    textile operations workflow.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const chatMessages = document.getElementById('chatMessages');
+    const chatInput = document.getElementById('chatInput');
+    const sendBtn = document.getElementById('sendBtn');
+
+    function addMessage(content, isUser = false) {
+        const wrapper = document.createElement('div');
+        wrapper.className = `flex items-start space-x-3 ${isUser ? 'justify-end' : ''}`;
+
+        if (isUser) {
+            wrapper.innerHTML = `
+                <div class="bg-indigo-600 text-white rounded-xl rounded-tr-none p-4 max-w-lg">
+                    <p class="text-sm">${escapeHtml(content)}</p>
+                </div>
+                <div class="w-8 h-8 rounded-lg bg-gray-200 flex items-center justify-center flex-shrink-0">
+                    <i class="fas fa-user text-gray-500 text-xs"></i>
+                </div>`;
+        } else {
+            wrapper.innerHTML = `
+                <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0">
+                    <i class="fas fa-robot text-white text-xs"></i>
+                </div>
+                <div class="bg-gray-50 rounded-xl rounded-tl-none p-4 max-w-lg">
+                    <div class="text-sm text-gray-700 whitespace-pre-line">${content}</div>
+                </div>`;
+        }
+
+        chatMessages.appendChild(wrapper);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    function addTypingIndicator() {
+        const el = document.createElement('div');
+        el.id = 'typingIndicator';
+        el.className = 'flex items-start space-x-3';
+        el.innerHTML = `
+            <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0">
+                <i class="fas fa-robot text-white text-xs"></i>
+            </div>
+            <div class="bg-gray-50 rounded-xl rounded-tl-none px-4 py-3">
+                <div class="flex space-x-1">
+                    <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay:0ms"></div>
+                    <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay:150ms"></div>
+                    <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay:300ms"></div>
+                </div>
+            </div>`;
+        chatMessages.appendChild(el);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    function removeTypingIndicator() {
+        const el = document.getElementById('typingIndicator');
+        if (el) el.remove();
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    async function sendMessage(e) {
+        if (e) e.preventDefault();
+        const message = chatInput.value.trim();
+        if (!message) return;
+
+        addMessage(message, true);
+        chatInput.value = '';
+        sendBtn.disabled = true;
+        addTypingIndicator();
+
+        try {
+            const res = await fetch('/api/ai/chat/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || getCookie('csrftoken'),
+                },
+                body: JSON.stringify({ message }),
+            });
+            const data = await res.json();
+            removeTypingIndicator();
+            addMessage(data.response || 'Sorry, I could not process that request.');
+        } catch {
+            removeTypingIndicator();
+            addMessage('Sorry, something went wrong. Please try again.');
+        }
+        sendBtn.disabled = false;
+        chatInput.focus();
+    }
+
+    function askQuestion(text) {
+        chatInput.value = text;
+        sendMessage(new Event('submit'));
+    }
+
+    async function quickAction(action) {
+        const messages = {
+            suggest: 'Can you suggest some new tasks for our organization?',
+            priority: 'Analyze the priority of my current tasks',
+            report: 'Generate a report of our task progress',
+            tips: 'Give me some productivity tips for managing tasks',
+        };
+        chatInput.value = messages[action] || action;
+        sendMessage(new Event('submit'));
+    }
+
+    function clearChat() {
+        chatMessages.innerHTML = `
+            <div class="flex items-start space-x-3">
+                <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0">
+                    <i class="fas fa-robot text-white text-xs"></i>
+                </div>
+                <div class="bg-gray-50 rounded-xl rounded-tl-none p-4 max-w-lg">
+                    <p class="text-sm text-gray-700">Chat cleared. How can I help you?</p>
+                </div>
+            </div>`;
+    }
+
+    function getCookie(name) {
+        const v = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
+        return v ? v.pop() : '';
+    }
+</script>
+{% endblock %}

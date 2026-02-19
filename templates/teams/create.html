@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% load core_tags %}
+
+{% block title %}Add Team{% endblock %}
+{% block page_title %}Add Team{% endblock %}
+{% block page_subtitle %}Create a new team{% endblock %}
+
+{% block content %}
+<div class="fade-in space-y-6">
+
+    <!-- Back Link -->
+    <a href="{% url 'team_list' %}" class="inline-flex items-center text-sm text-gray-500 hover:text-primary-600 font-medium transition">
+        <i class="fas fa-arrow-left mr-2"></i> Back to Teams
+    </a>
+
+    <div class="max-w-2xl">
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+
+            <div class="glass-card rounded-2xl p-5 lg:p-6 space-y-5">
+                <div class="flex items-center gap-3 mb-2">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-purple-500 flex items-center justify-center">
+                        <i class="fas fa-people-arrows text-white"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-lg font-bold text-gray-800">Team Details</h2>
+                        <p class="text-xs text-gray-500">Fill in the team information below</p>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wider">Team Name</label>
+                    <input type="text" name="name" required placeholder="Team name..."
+                           class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wider">Description</label>
+                    <textarea name="description" rows="3" placeholder="Describe the team purpose..."
+                              class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition resize-y"></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wider">Team Color</label>
+                    <div class="flex items-center gap-3">
+                        <input type="color" name="color" id="teamColor" value="#6366f1"
+                               class="w-12 h-10 rounded-lg border border-gray-200 cursor-pointer">
+                        <input type="text" id="colorHex" value="#6366f1" readonly
+                               class="px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-600 w-28">
+                        <div class="flex gap-2">
+                            <button type="button" onclick="setColor('#6366f1')" class="w-8 h-8 rounded-lg bg-indigo-500 hover:ring-2 ring-indigo-300 transition"></button>
+                            <button type="button" onclick="setColor('#8b5cf6')" class="w-8 h-8 rounded-lg bg-purple-500 hover:ring-2 ring-purple-300 transition"></button>
+                            <button type="button" onclick="setColor('#ec4899')" class="w-8 h-8 rounded-lg bg-pink-500 hover:ring-2 ring-pink-300 transition"></button>
+                            <button type="button" onclick="setColor('#10b981')" class="w-8 h-8 rounded-lg bg-emerald-500 hover:ring-2 ring-emerald-300 transition"></button>
+                            <button type="button" onclick="setColor('#f59e0b')" class="w-8 h-8 rounded-lg bg-amber-500 hover:ring-2 ring-amber-300 transition"></button>
+                            <button type="button" onclick="setColor('#ef4444')" class="w-8 h-8 rounded-lg bg-red-500 hover:ring-2 ring-red-300 transition"></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Submit -->
+            <div class="flex items-center justify-end gap-3">
+                <a href="{% url 'team_list' %}" class="px-5 py-2.5 bg-gray-100 text-gray-700 text-sm font-semibold rounded-xl hover:bg-gray-200 transition">
+                    Cancel
+                </a>
+                <button type="submit" class="px-6 py-2.5 bg-gradient-to-r from-primary-600 to-purple-600 text-white text-sm font-semibold rounded-xl hover:shadow-lg hover:shadow-primary-500/25 transition-all hover:-translate-y-0.5">
+                    <i class="fas fa-check mr-2"></i> Create Team
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const colorInput = document.getElementById('teamColor');
+const hexInput = document.getElementById('colorHex');
+
+colorInput.addEventListener('input', function() {
+    hexInput.value = this.value;
+});
+
+function setColor(color) {
+    colorInput.value = color;
+    hexInput.value = color;
+}
+</script>
+{% endblock %}

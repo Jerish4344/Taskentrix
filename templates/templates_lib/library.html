@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+{% load core_tags %}
+
+{% block title %}Template Library{% endblock %}
+{% block page_title %}Template Library{% endblock %}
+{% block page_subtitle %}Reusable task and project templates{% endblock %}
+
+{% block content %}
+<div class="fade-in space-y-6">
+
+    <!-- Tab Toggle + Create Button -->
+    <div class="glass-card rounded-2xl p-4 lg:p-5">
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <!-- Tab Toggle -->
+            <div class="flex bg-gray-100 rounded-xl p-1">
+                <a href="?tab=task"
+                   class="px-5 py-2 rounded-lg text-sm font-semibold transition {% if tab == 'task' or not tab %}bg-white text-primary-700 shadow-sm{% else %}text-gray-500 hover:text-gray-700{% endif %}">
+                    <i class="fas fa-clipboard-list mr-2"></i> Task Templates
+                </a>
+                <a href="?tab=project"
+                   class="px-5 py-2 rounded-lg text-sm font-semibold transition {% if tab == 'project' %}bg-white text-primary-700 shadow-sm{% else %}text-gray-500 hover:text-gray-700{% endif %}">
+                    <i class="fas fa-project-diagram mr-2"></i> Project Templates
+                </a>
+            </div>
+
+            <a href="{% url 'template_create' %}?tab={{ tab|default:'task' }}" class="inline-flex items-center px-4 py-2.5 bg-gradient-to-r from-primary-600 to-purple-600 text-white text-sm font-semibold rounded-xl hover:shadow-lg hover:shadow-primary-500/25 transition-all hover:-translate-y-0.5">
+                <i class="fas fa-plus mr-2"></i> Create Template
+            </a>
+        </div>
+
+        <!-- Search + Filters -->
+        <form method="get" class="mt-4">
+            <input type="hidden" name="tab" value="{{ tab|default:'task' }}">
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                <div class="relative flex-1 max-w-md">
+                    <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+                    <input type="text" name="search" value="{{ search }}" placeholder="Search templates..."
+                           class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition">
+                </div>
+                <select name="category" onchange="this.form.submit()" class="text-xs bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition">
+                    <option value="">All Categories</option>
+                    {% for cat in categories %}
+                    <option value="{{ cat }}" {% if category == cat %}selected{% endif %}>{{ cat }}</option>
+                    {% endfor %}
+                </select>
+                <select name="industry" onchange="this.form.submit()" class="text-xs bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition">
+                    <option value="">All Industries</option>
+                    {% for ind in industries %}
+                    <option value="{{ ind.id }}" {% if industry == ind.id|stringformat:"d" %}selected{% endif %}>{{ ind.name }}</option>
+                    {% endfor %}
+                </select>
+                {% if search or category or industry %}
+                <a href="?tab={{ tab|default:'task' }}" class="text-xs text-red-500 hover:text-red-700 font-medium transition">
+                    <i class="fas fa-times mr-1"></i> Clear
+                </a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+
+    {% if templates %}
+    <!-- Template Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        {% for template in templates %}
+        <div class="glass-card rounded-2xl p-5 hover-lift fade-in">
+            <div class="flex items-start justify-between mb-3">
+                <div class="flex-1 min-w-0">
+                    <h3 class="text-sm font-bold text-gray-800 truncate">{{ template.name }}</h3>
+                    <p class="text-xs text-gray-500 mt-1 line-clamp-2">{{ template.description|truncatewords:20 }}</p>
+                </div>
+                <div class="ml-3 w-10 h-10 rounded-xl bg-primary-50 flex items-center justify-center flex-shrink-0">
+                    <i class="fas fa-layer-group text-primary-500"></i>
+                </div>
+            </div>
+
+            {% if template.category %}
+            <div class="mb-3">
+                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-600">
+                    <i class="fas fa-folder mr-1"></i> {{ template.category }}
+                </span>
+            </div>
+            {% endif %}
+
+            {% if template.industries.all %}
+            <div class="flex flex-wrap gap-1 mb-4">
+                {% for ind in template.industries.all %}
+                <span class="text-[10px] bg-purple-50 text-purple-600 px-2 py-0.5 rounded-md font-medium">{{ ind.name }}</span>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <div class="flex items-center justify-between pt-3 border-t border-gray-100">
+                <a href="{% if tab == 'project' %}{% url 'template_detail_project' template.id %}{% else %}{% url 'template_detail' template.id %}{% endif %}" class="text-xs text-primary-600 hover:text-primary-700 font-semibold transition">
+                    <i class="fas fa-eye mr-1"></i> View Details
+                </a>
+                <a href="{% url 'template_use' template.id %}" class="inline-flex items-center px-3 py-1.5 bg-gradient-to-r from-primary-600 to-purple-600 text-white text-xs font-semibold rounded-lg hover:shadow-md transition-all">
+                    <i class="fas fa-play mr-1"></i> Use Template
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if templates.has_other_pages %}
+    <div class="flex items-center justify-between glass-card rounded-2xl px-5 py-3">
+        <p class="text-xs text-gray-500">
+            Page <span class="font-semibold text-gray-800">{{ templates.number }}</span> of <span class="font-semibold text-gray-800">{{ templates.paginator.num_pages }}</span>
+        </p>
+        <div class="flex items-center gap-1">
+            {% if templates.has_previous %}
+            <a href="?tab={{ tab|default:'task' }}&page={{ templates.previous_page_number }}{% if search %}&search={{ search }}{% endif %}{% if category %}&category={{ category }}{% endif %}"
+               class="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-medium text-gray-700 hover:bg-gray-50 transition">
+                <i class="fas fa-chevron-left mr-1"></i> Prev
+            </a>
+            {% endif %}
+            {% for num in templates.paginator.page_range %}
+                {% if templates.number == num %}
+                <span class="px-3 py-1.5 bg-primary-600 text-white rounded-lg text-xs font-bold">{{ num }}</span>
+                {% elif num > templates.number|add:"-3" and num < templates.number|add:"3" %}
+                <a href="?tab={{ tab|default:'task' }}&page={{ num }}{% if search %}&search={{ search }}{% endif %}{% if category %}&category={{ category }}{% endif %}"
+                   class="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-medium text-gray-700 hover:bg-gray-50 transition">{{ num }}</a>
+                {% endif %}
+            {% endfor %}
+            {% if templates.has_next %}
+            <a href="?tab={{ tab|default:'task' }}&page={{ templates.next_page_number }}{% if search %}&search={{ search }}{% endif %}{% if category %}&category={{ category }}{% endif %}"
+               class="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-medium text-gray-700 hover:bg-gray-50 transition">
+                Next <i class="fas fa-chevron-right ml-1"></i>
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% else %}
+    <!-- Empty State -->
+    <div class="glass-card rounded-2xl p-12 text-center fade-in">
+        <div class="w-20 h-20 bg-primary-50 rounded-full flex items-center justify-center mx-auto mb-5">
+            <i class="fas fa-layer-group text-3xl text-primary-400"></i>
+        </div>
+        <h3 class="text-lg font-bold text-gray-800 mb-2">No templates found</h3>
+        <p class="text-sm text-gray-500 mb-6 max-w-sm mx-auto">
+            {% if search or category or industry %}
+                No templates match your filters. Try adjusting or clearing them.
+            {% else %}
+                Get started by creating your first {{ tab|default:"task" }} template.
+            {% endif %}
+        </p>
+        <div class="flex items-center justify-center gap-3">
+            {% if search or category or industry %}
+            <a href="?tab={{ tab|default:'task' }}" class="inline-flex items-center px-4 py-2.5 bg-gray-100 text-gray-700 text-sm font-semibold rounded-xl hover:bg-gray-200 transition">
+                <i class="fas fa-times mr-2"></i> Clear Filters
+            </a>
+            {% endif %}
+            <a href="{% url 'template_create' %}?tab={{ tab|default:'task' }}" class="inline-flex items-center px-5 py-2.5 bg-gradient-to-r from-primary-600 to-purple-600 text-white text-sm font-semibold rounded-xl hover:shadow-lg hover:shadow-primary-500/25 transition-all">
+                <i class="fas fa-plus mr-2"></i> Create Template
+            </a>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

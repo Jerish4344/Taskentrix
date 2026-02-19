@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+{% load core_tags %}
+
+{% block title %}Issue Board{% endblock %}
+{% block page_title %}Issue Board{% endblock %}
+{% block page_subtitle %}Drag and drop to update issue status{% endblock %}
+
+{% block extra_css %}
+<style>
+    .kanban-column { min-height: 60vh; }
+    .drag-over { background-color: rgba(99, 102, 241, 0.05); border-color: rgba(99, 102, 241, 0.3); }
+    .dragging { opacity: 0.5; transform: rotate(2deg); }
+    .kanban-card { cursor: grab; }
+    .kanban-card:active { cursor: grabbing; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="fade-in space-y-5">
+
+    <!-- Top Bar -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div class="flex bg-gray-100 rounded-xl p-1">
+            <a href="{% url 'issue_list' %}?view=list"
+               class="px-3 py-1.5 rounded-lg text-xs font-semibold transition text-gray-500 hover:text-gray-700">
+                <i class="fas fa-list mr-1"></i> List
+            </a>
+            <a href="{% url 'issue_board' %}"
+               class="px-3 py-1.5 rounded-lg text-xs font-semibold transition bg-white text-primary-700 shadow-sm">
+                <i class="fas fa-columns mr-1"></i> Board
+            </a>
+        </div>
+        <a href="{% url 'issue_create' %}" class="inline-flex items-center px-4 py-2.5 bg-gradient-to-r from-primary-600 to-purple-600 text-white text-sm font-semibold rounded-xl hover:shadow-lg hover:shadow-primary-500/25 transition-all hover:-translate-y-0.5">
+            <i class="fas fa-plus mr-2"></i> Report Issue
+        </a>
+    </div>
+
+    <!-- Kanban Board -->
+    <div class="flex gap-4 overflow-x-auto pb-4 -mx-4 px-4 lg:-mx-6 lg:px-6 snap-x">
+        {% for status_key, col in columns.items %}
+        <div class="flex-shrink-0 w-72 lg:w-80 snap-start">
+            <!-- Column Header -->
+            <div class="flex items-center justify-between mb-3 px-1">
+                <div class="flex items-center gap-2">
+                    <div class="w-3 h-3 rounded-full" style="background-color: {{ col.color }}"></div>
+                    <h3 class="text-sm font-bold text-gray-800">{{ col.label }}</h3>
+                    <span class="px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full text-xs font-semibold">{{ col.issues|length }}</span>
+                </div>
+            </div>
+
+            <!-- Column Drop Zone -->
+            <div class="kanban-column bg-gray-50/60 rounded-2xl p-2.5 space-y-2.5 border-2 border-transparent transition-colors"
+                 id="column-{{ status_key }}"
+                 data-status="{{ status_key }}"
+                 ondragover="handleDragOver(event)"
+                 ondragleave="handleDragLeave(event)"
+                 ondrop="handleDrop(event)">
+
+                {% for issue in col.issues %}
+                <div class="kanban-card glass-card rounded-xl p-3.5 hover-lift hover:border-primary-200 transition-all"
+                     draggable="true"
+                     data-issue-id="{{ issue.id }}"
+                     ondragstart="handleDragStart(event)"
+                     ondragend="handleDragEnd(event)">
+
+                    <!-- Title -->
+                    <a href="{% url 'issue_detail' issue.id %}" class="block text-sm font-semibold text-gray-800 hover:text-primary-600 transition mb-2 line-clamp-2">
+                        {{ issue.title }}
+                    </a>
+
+                    <!-- Badges -->
+                    <div class="flex flex-wrap gap-1.5 mb-3">
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold {{ issue.priority|priority_badge_class }}">
+                            {{ issue.get_priority_display }}
+                        </span>
+                        {% if issue.tags %}
+                        <span class="text-[10px] text-indigo-500 font-medium"><i class="fas fa-tag mr-0.5"></i>{{ issue.tags|truncatewords:3 }}</span>
+                        {% endif %}
+                    </div>
+
+                    <!-- Bottom row: assignees + due date -->
+                    <div class="flex items-center justify-between">
+                        <div class="flex -space-x-1.5">
+                            {% for person in issue.assignee_list %}
+                            <div class="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold border-2 border-white" style="background-color: {{ person.avatar_color }}" title="{{ person.full_name }}">
+                                {{ person.initials }}
+                            </div>
+                            {% empty %}
+                            <span class="text-[10px] text-gray-400">Unassigned</span>
+                            {% endfor %}
+                        </div>
+                        {% if issue.start_date %}
+                        <span class="text-[10px] font-medium text-gray-500">
+                            <i class="fas fa-clock mr-0.5"></i>{{ issue.start_date|date:"M d" }}
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% empty %}
+                <!-- Empty Column -->
+                <div class="flex flex-col items-center justify-center py-12 text-center">
+                    <div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-3">
+                        <i class="fas fa-inbox text-gray-300 text-lg"></i>
+                    </div>
+                    <p class="text-xs text-gray-400 font-medium">No issues</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let draggedIssueId = null;
+
+function handleDragStart(e) {
+    draggedIssueId = e.target.dataset.issueId;
+    e.target.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', draggedIssueId);
+}
+
+function handleDragEnd(e) {
+    e.target.classList.remove('dragging');
+    document.querySelectorAll('.kanban-column').forEach(col => col.classList.remove('drag-over'));
+}
+
+function handleDragOver(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    const col = e.currentTarget;
+    col.classList.add('drag-over');
+}
+
+function handleDragLeave(e) {
+    e.currentTarget.classList.remove('drag-over');
+}
+
+function handleDrop(e) {
+    e.preventDefault();
+    const col = e.currentTarget;
+    col.classList.remove('drag-over');
+    const newStatus = col.dataset.status;
+    const issueId = e.dataTransfer.getData('text/plain');
+
+    if (!issueId || !newStatus) return;
+
+    // Optimistic UI: move card
+    const card = document.querySelector(`[data-issue-id="${issueId}"]`);
+    if (card) {
+        const emptyState = col.querySelector('.flex.flex-col.items-center');
+        if (emptyState) emptyState.remove();
+        col.appendChild(card);
+    }
+
+    // Update counts
+    updateColumnCounts();
+
+    // API call
+    fetch(`/issues/api/${issueId}/status/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken'),
+        },
+        body: JSON.stringify({ status: newStatus }),
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (!data.success) {
+            location.reload();
+        }
+    })
+    .catch(() => location.reload());
+}
+
+function updateColumnCounts() {
+    document.querySelectorAll('.kanban-column').forEach(col => {
+        const count = col.querySelectorAll('.kanban-card').length;
+        const header = col.previousElementSibling;
+        if (header) {
+            const badge = header.querySelector('.rounded-full');
+            if (badge) badge.textContent = count;
+        }
+    });
+}
+
+function getCookie(name) {
+    let v = document.cookie.match('(^|;) ?' + name + '=([^;]*)(;|$)');
+    return v ? v[2] : null;
+}
+</script>
+{% endblock %}

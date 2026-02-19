@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% load core_tags %}
+
+{% block title %}Response Detail{% endblock %}
+{% block page_title %}Response Detail{% endblock %}
+{% block page_subtitle %}Response for {{ response.form.title|truncatewords:6 }}{% endblock %}
+
+{% block content %}
+<div class="fade-in space-y-6">
+
+    <!-- Action Bar -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <a href="{% url 'form_detail' response.form.id %}" class="inline-flex items-center text-sm text-gray-500 hover:text-primary-600 font-medium transition">
+            <i class="fas fa-arrow-left mr-2"></i> Back to Form
+        </a>
+        {% if not response.is_reviewed %}
+        <form method="post" class="inline">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="review">
+            <button type="submit" class="inline-flex items-center px-4 py-2.5 bg-gradient-to-r from-green-500 to-emerald-500 text-white text-sm font-semibold rounded-xl hover:shadow-lg transition-all hover:-translate-y-0.5">
+                <i class="fas fa-check-circle mr-2"></i> Mark as Reviewed
+            </button>
+        </form>
+        {% endif %}
+    </div>
+
+    <div class="max-w-2xl mx-auto">
+        <!-- Response Info -->
+        <div class="glass-card rounded-2xl p-5 lg:p-6 mb-6">
+            <div class="flex items-start gap-4 mb-5">
+                <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-500 to-purple-500 flex items-center justify-center flex-shrink-0">
+                    <i class="fas fa-inbox text-white text-lg"></i>
+                </div>
+                <div class="flex-1">
+                    <h2 class="text-lg font-bold text-gray-800">{{ response.form.title }}</h2>
+                    <div class="flex items-center gap-2 mt-1">
+                        {% if response.is_reviewed %}
+                        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700">
+                            <i class="fas fa-check-circle mr-1"></i> Reviewed
+                        </span>
+                        {% else %}
+                        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-700">
+                            <i class="fas fa-clock mr-1"></i> Pending Review
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4 mb-5 p-4 bg-gray-50 rounded-xl">
+                <div>
+                    <p class="text-xs text-gray-400 font-semibold uppercase tracking-wider mb-0.5">Submitted By</p>
+                    <p class="text-sm font-medium text-gray-800">{{ response.submitted_by.full_name|default:"Anonymous" }}</p>
+                </div>
+                <div>
+                    <p class="text-xs text-gray-400 font-semibold uppercase tracking-wider mb-0.5">Submitted At</p>
+                    <p class="text-sm font-medium text-gray-800">{{ response.created_at|date:"M d, Y H:i" }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Response Data -->
+        <div class="glass-card rounded-2xl p-5 lg:p-6">
+            <h3 class="text-sm font-bold text-gray-800 mb-4">
+                <i class="fas fa-list-alt text-primary-500 mr-2"></i> Response Data
+            </h3>
+            <div class="space-y-3">
+                {% for key, value in response.data.items %}
+                <div class="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-4 p-3 bg-gray-50 rounded-xl">
+                    <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider sm:w-40 flex-shrink-0">{{ key }}</span>
+                    <span class="text-sm text-gray-800 font-medium flex-1">{{ value|default:"—" }}</span>
+                </div>
+                {% empty %}
+                <div class="text-center py-8 text-gray-400">
+                    <i class="fas fa-database text-2xl mb-2"></i>
+                    <p class="text-sm">No response data available</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

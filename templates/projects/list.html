@@ -1,0 +1,263 @@
+{% extends "base.html" %}
+{% load core_tags %}
+
+{% block title %}Projects{% endblock %}
+{% block page_title %}Projects{% endblock %}
+{% block page_subtitle %}Manage all projects{% endblock %}
+
+{% block content %}
+<div class="fade-in space-y-6">
+
+    <!-- Top Bar: Search, Filters, View Toggle, Create -->
+    <div class="glass-card rounded-2xl p-4 lg:p-5">
+        <form method="get" action="{% url 'project_list' %}" id="filterForm">
+            <!-- Row 1: Search + View Toggle + Create -->
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 mb-4">
+                <!-- Search -->
+                <div class="relative flex-1 max-w-md">
+                    <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+                    <input type="text" name="search" value="{{ filters.search }}" placeholder="Search projects..."
+                           class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition">
+                </div>
+
+                <div class="flex items-center gap-2 flex-wrap">
+                    <!-- View Toggle -->
+                    <div class="flex bg-gray-100 rounded-xl p-1">
+                        <a href="{% url 'project_list' %}?view=list{% for k, v in filters.items %}{% if v and k != 'view' %}&{{ k }}={{ v }}{% endif %}{% endfor %}"
+                           class="px-3 py-1.5 rounded-lg text-xs font-semibold transition {% if view_mode == 'list' or not view_mode %}bg-white text-primary-700 shadow-sm{% else %}text-gray-500 hover:text-gray-700{% endif %}">
+                            <i class="fas fa-list mr-1"></i> List
+                        </a>
+                        <a href="{% url 'project_board' %}"
+                           class="px-3 py-1.5 rounded-lg text-xs font-semibold transition {% if view_mode == 'board' %}bg-white text-primary-700 shadow-sm{% else %}text-gray-500 hover:text-gray-700{% endif %}">
+                            <i class="fas fa-columns mr-1"></i> Board
+                        </a>
+                    </div>
+
+                    <!-- Create Project -->
+                    <a href="{% url 'project_create' %}" class="inline-flex items-center px-4 py-2.5 bg-gradient-to-r from-primary-600 to-purple-600 text-white text-sm font-semibold rounded-xl hover:shadow-lg hover:shadow-primary-500/25 transition-all hover:-translate-y-0.5">
+                        <i class="fas fa-plus mr-2"></i> Create Project
+                    </a>
+                </div>
+            </div>
+
+            <!-- Row 2: Filter Dropdowns -->
+            <div class="flex flex-wrap items-center gap-2">
+                <select name="status" onchange="this.form.submit()" class="text-xs bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition">
+                    <option value="">All Statuses</option>
+                    {% for val, label in status_choices %}
+                    <option value="{{ val }}" {% if filters.status == val %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+
+                <select name="outlet" onchange="this.form.submit()" class="text-xs bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition">
+                    <option value="">All Outlets</option>
+                    {% for o in outlets %}
+                    <option value="{{ o.id }}" {% if filters.outlet == o.id|stringformat:"d" %}selected{% endif %}>{{ o.name }}</option>
+                    {% endfor %}
+                </select>
+
+                <select name="tag" onchange="this.form.submit()" class="text-xs bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition">
+                    <option value="">All Tags</option>
+                    {% for tag in tags %}
+                    <option value="{{ tag.id }}" {% if filters.tag == tag.id|stringformat:"d" %}selected{% endif %}>{{ tag.name }}</option>
+                    {% endfor %}
+                </select>
+
+                <select name="member" onchange="this.form.submit()" class="text-xs bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition">
+                    <option value="">All Members</option>
+                    {% for m in members %}
+                    <option value="{{ m.id }}" {% if filters.member == m.id|stringformat:"d" %}selected{% endif %}>{{ m.full_name }}</option>
+                    {% endfor %}
+                </select>
+
+                <input type="hidden" name="view" value="{{ view_mode }}">
+
+                {% if filters.status or filters.outlet or filters.tag or filters.member or filters.search %}
+                <a href="{% url 'project_list' %}" class="text-xs text-red-500 hover:text-red-700 font-medium ml-1 transition">
+                    <i class="fas fa-times mr-1"></i> Clear All
+                </a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+
+    {% if projects %}
+    <!-- Project Cards Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+        {% for project in projects %}
+        <div class="glass-card rounded-2xl p-5 hover-lift transition-all group">
+            <!-- Header: Name + Status -->
+            <div class="flex items-start justify-between mb-3">
+                <div class="flex-1 min-w-0 pr-3">
+                    <a href="{% url 'project_detail' project.id %}" class="text-base font-bold text-gray-800 hover:text-primary-600 transition line-clamp-1 block">
+                        {{ project.name }}
+                    </a>
+                    {% if project.outlet %}
+                    <span class="text-[11px] text-gray-400 font-medium">
+                        <i class="fas fa-store mr-0.5"></i> {{ project.outlet.name }}
+                    </span>
+                    {% endif %}
+                </div>
+                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold flex-shrink-0
+                    {% if project.status == 'active' %}bg-emerald-50 text-emerald-700 border border-emerald-200
+                    {% elif project.status == 'on_hold' %}bg-amber-50 text-amber-700 border border-amber-200
+                    {% elif project.status == 'completed' %}bg-blue-50 text-blue-700 border border-blue-200
+                    {% elif project.status == 'archived' %}bg-gray-100 text-gray-500 border border-gray-200
+                    {% endif %}">
+                    {% if project.status == 'active' %}<i class="fas fa-circle text-[6px] mr-1.5 text-emerald-500"></i>
+                    {% elif project.status == 'on_hold' %}<i class="fas fa-pause-circle text-[10px] mr-1"></i>
+                    {% elif project.status == 'completed' %}<i class="fas fa-check-circle text-[10px] mr-1"></i>
+                    {% elif project.status == 'archived' %}<i class="fas fa-archive text-[10px] mr-1"></i>
+                    {% endif %}
+                    {{ project.get_status_display }}
+                </span>
+            </div>
+
+            <!-- Description -->
+            {% if project.description %}
+            <p class="text-xs text-gray-500 leading-relaxed mb-4 line-clamp-2">{{ project.description|truncatewords:25 }}</p>
+            {% else %}
+            <p class="text-xs text-gray-400 italic mb-4">No description</p>
+            {% endif %}
+
+            <!-- Progress Bar -->
+            <div class="mb-4">
+                <div class="flex items-center justify-between mb-1.5">
+                    <span class="text-[11px] font-semibold text-gray-600">Progress</span>
+                    <span class="text-[11px] font-bold text-primary-600">{{ project.progress_percent }}%</span>
+                </div>
+                <div class="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+                    <div class="h-full rounded-full bg-gradient-to-r from-primary-500 to-purple-500 transition-all duration-500"
+                         style="width: {{ project.progress_percent }}%"></div>
+                </div>
+            </div>
+
+            <!-- Task Counts -->
+            <div class="grid grid-cols-4 gap-2 mb-4">
+                <div class="text-center p-2 bg-gray-50 rounded-xl">
+                    <p class="text-sm font-bold text-gray-800">{{ project.total_tasks }}</p>
+                    <p class="text-[10px] text-gray-400 font-medium">Total</p>
+                </div>
+                <div class="text-center p-2 bg-emerald-50 rounded-xl">
+                    <p class="text-sm font-bold text-emerald-600">{{ project.completed_tasks }}</p>
+                    <p class="text-[10px] text-emerald-500 font-medium">Done</p>
+                </div>
+                <div class="text-center p-2 bg-blue-50 rounded-xl">
+                    <p class="text-sm font-bold text-blue-600">{{ project.ongoing_tasks }}</p>
+                    <p class="text-[10px] text-blue-500 font-medium">Active</p>
+                </div>
+                <div class="text-center p-2 bg-red-50 rounded-xl">
+                    <p class="text-sm font-bold text-red-600">{{ project.overdue_tasks }}</p>
+                    <p class="text-[10px] text-red-500 font-medium">Overdue</p>
+                </div>
+            </div>
+
+            <!-- Members & Dates -->
+            <div class="flex items-center justify-between pt-3 border-t border-gray-100">
+                <!-- Member Avatars -->
+                <div class="flex -space-x-2">
+                    {% for member in project.members.all|slice:":5" %}
+                    <div class="w-7 h-7 rounded-full flex items-center justify-center text-white text-[10px] font-bold border-2 border-white shadow-sm" style="background-color: {{ member.avatar_color }}" title="{{ member.full_name }}">
+                        {{ member.initials }}
+                    </div>
+                    {% empty %}
+                    <span class="text-[11px] text-gray-400 italic">No members</span>
+                    {% endfor %}
+                    {% with remaining=project.members.count|add:"-5" %}
+                    {% if remaining > 0 %}
+                    <div class="w-7 h-7 rounded-full flex items-center justify-center bg-gray-200 text-[10px] font-bold text-gray-600 border-2 border-white">
+                        +{{ remaining }}
+                    </div>
+                    {% endif %}
+                    {% endwith %}
+                </div>
+
+                <!-- Dates -->
+                <div class="text-right">
+                    {% if project.start_date or project.end_date %}
+                    <p class="text-[10px] text-gray-400 font-medium">
+                        <i class="fas fa-calendar-alt mr-0.5"></i>
+                        {% if project.start_date %}{{ project.start_date|date:"M d" }}{% endif %}
+                        {% if project.start_date and project.end_date %} – {% endif %}
+                        {% if project.end_date %}{{ project.end_date|date:"M d, Y" }}{% endif %}
+                    </p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Tags -->
+            {% if project.tags.all %}
+            <div class="flex flex-wrap gap-1.5 mt-3 pt-3 border-t border-gray-100">
+                {% for tag in project.tags.all|slice:":4" %}
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold" style="background-color: {{ tag.color }}15; color: {{ tag.color }}; border: 1px solid {{ tag.color }}30;">
+                    {{ tag.name }}
+                </span>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if projects.paginator %}
+    <div class="flex items-center justify-between glass-card rounded-2xl px-5 py-3">
+        <p class="text-xs text-gray-500">
+            Page <span class="font-semibold text-gray-800">{{ projects.number }}</span> of <span class="font-semibold text-gray-800">{{ projects.paginator.num_pages }}</span>
+        </p>
+        <div class="flex items-center gap-1">
+            {% if projects.has_previous %}
+            <a href="?page={{ projects.previous_page_number }}{% for k, v in filters.items %}{% if v %}&{{ k }}={{ v }}{% endif %}{% endfor %}"
+               class="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-medium text-gray-700 hover:bg-gray-50 transition">
+                <i class="fas fa-chevron-left mr-1"></i> Prev
+            </a>
+            {% endif %}
+
+            {% for num in projects.paginator.page_range %}
+                {% if projects.number == num %}
+                <span class="px-3 py-1.5 bg-primary-600 text-white rounded-lg text-xs font-bold">{{ num }}</span>
+                {% elif num > projects.number|add:"-3" and num < projects.number|add:"3" %}
+                <a href="?page={{ num }}{% for k, v in filters.items %}{% if v %}&{{ k }}={{ v }}{% endif %}{% endfor %}"
+                   class="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-medium text-gray-700 hover:bg-gray-50 transition">{{ num }}</a>
+                {% endif %}
+            {% endfor %}
+
+            {% if projects.has_next %}
+            <a href="?page={{ projects.next_page_number }}{% for k, v in filters.items %}{% if v %}&{{ k }}={{ v }}{% endif %}{% endfor %}"
+               class="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-medium text-gray-700 hover:bg-gray-50 transition">
+                Next <i class="fas fa-chevron-right ml-1"></i>
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% else %}
+    <!-- Empty State -->
+    <div class="glass-card rounded-2xl p-12 text-center fade-in">
+        <div class="w-20 h-20 bg-primary-50 rounded-full flex items-center justify-center mx-auto mb-5">
+            <i class="fas fa-project-diagram text-3xl text-primary-400"></i>
+        </div>
+        <h3 class="text-lg font-bold text-gray-800 mb-2">No projects found</h3>
+        <p class="text-sm text-gray-500 mb-6 max-w-sm mx-auto">
+            {% if filters.search or filters.status or filters.outlet or filters.tag or filters.member %}
+                No projects match your current filters. Try adjusting them or clear all filters.
+            {% else %}
+                Get started by creating your first project to organize tasks.
+            {% endif %}
+        </p>
+        <div class="flex items-center justify-center gap-3">
+            {% if filters.search or filters.status or filters.outlet or filters.tag or filters.member %}
+            <a href="{% url 'project_list' %}" class="inline-flex items-center px-4 py-2.5 bg-gray-100 text-gray-700 text-sm font-semibold rounded-xl hover:bg-gray-200 transition">
+                <i class="fas fa-times mr-2"></i> Clear Filters
+            </a>
+            {% endif %}
+            <a href="{% url 'project_create' %}" class="inline-flex items-center px-5 py-2.5 bg-gradient-to-r from-primary-600 to-purple-600 text-white text-sm font-semibold rounded-xl hover:shadow-lg hover:shadow-primary-500/25 transition-all">
+                <i class="fas fa-plus mr-2"></i> Create Project
+            </a>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}
