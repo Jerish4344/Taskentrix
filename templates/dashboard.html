@@ -381,23 +381,32 @@ document.addEventListener('DOMContentLoaded', function () {
                 'overdue':     { bg: '#ef4444', label: 'Overdue' }
             };
 
-            // Handle both array and object responses
-            var statusData = data.status_distribution || data.statuses || data;
-            if (Array.isArray(statusData)) {
-                statusData.forEach(function (item) {
-                    var key = item.status || item.name || item.label;
-                    var info = colorMap[key] || { bg: '#cbd5e1', label: key };
-                    labels.push(info.label);
-                    values.push(item.count || item.value || 0);
-                    colors.push(info.bg);
+            // API returns { status: { labels, data, colors }, priority: { ... } }
+            if (data.status && data.status.labels && data.status.data) {
+                labels = data.status.labels;
+                values = data.status.data;
+                colors = data.status.colors || labels.map(function(l, i) {
+                    return ['#94a3b8','#3b82f6','#8b5cf6','#22c55e','#f59e0b'][i] || '#cbd5e1';
                 });
-            } else if (typeof statusData === 'object') {
-                Object.keys(statusData).forEach(function (key) {
-                    var info = colorMap[key] || { bg: '#cbd5e1', label: key };
-                    labels.push(info.label);
-                    values.push(statusData[key]);
-                    colors.push(info.bg);
-                });
+            } else {
+                // Fallback: handle array or flat-object responses
+                var statusData = data.status_distribution || data.statuses || data;
+                if (Array.isArray(statusData)) {
+                    statusData.forEach(function (item) {
+                        var key = item.status || item.name || item.label;
+                        var info = colorMap[key] || { bg: '#cbd5e1', label: key };
+                        labels.push(info.label);
+                        values.push(item.count || item.value || 0);
+                        colors.push(info.bg);
+                    });
+                } else if (typeof statusData === 'object') {
+                    Object.keys(statusData).forEach(function (key) {
+                        var info = colorMap[key] || { bg: '#cbd5e1', label: key };
+                        labels.push(info.label);
+                        values.push(statusData[key]);
+                        colors.push(info.bg);
+                    });
+                }
             }
 
             // Fallback if API returns nothing useful
