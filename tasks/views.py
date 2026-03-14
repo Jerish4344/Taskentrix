@@ -229,6 +229,18 @@ def task_create_view(request):
     })
 
 
+def api_team_members(request, team_id):
+    """Return members of a team as JSON."""
+    org = get_current_org(request)
+    profile = get_current_profile(request)
+    if not org or not profile:
+        return JsonResponse({"error": "unauthorized"}, status=403)
+    team = get_object_or_404(Team, id=team_id, organization=org, is_active=True)
+    members = UserProfile.objects.filter(organization=org, team=team, is_active=True).select_related("user")
+    data = [{"id": m.id, "name": m.full_name} for m in members]
+    return JsonResponse(data, safe=False)
+
+
 def task_detail_view(request, task_id):
     org = get_current_org(request)
     profile = get_current_profile(request)

@@ -9,4 +9,5 @@ urlpatterns = [
     path("<int:task_id>/", views.task_detail_view, name="task_detail"),
     path("api/<int:task_id>/status/", views.api_task_status_update, name="api_task_status"),
     path("api/<int:task_id>/star/", views.api_task_star_toggle, name="api_task_star"),
+    path("api/team/<int:team_id>/members/", views.api_team_members, name="api_team_members"),
 ]

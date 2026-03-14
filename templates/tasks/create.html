@@ -191,9 +191,9 @@
                 <h2 class="text-base font-bold text-gray-800">Assign To</h2>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 max-h-64 overflow-y-auto pr-1">
+            <div id="assignToContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 max-h-64 overflow-y-auto pr-1">
                 {% for m in members %}
-                <label class="flex items-center gap-3 p-2.5 rounded-xl border border-gray-100 hover:border-primary-200 hover:bg-primary-50/30 cursor-pointer transition group">
+                <label class="assign-member-label flex items-center gap-3 p-2.5 rounded-xl border border-gray-100 hover:border-primary-200 hover:bg-primary-50/30 cursor-pointer transition group" data-member-id="{{ m.id }}" data-team-id="{{ m.team_id|default:'' }}">
                     <input type="checkbox" name="assigned_to" value="{{ m.id }}" class="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500">
                     <div class="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0" style="background-color: {{ m.avatar_color }}">
                         {{ m.initials }}
@@ -202,6 +202,9 @@
                 </label>
                 {% endfor %}
             </div>
+            <p id="noTeamMembersMsg" class="text-xs text-gray-400 hidden">
+                <i class="fas fa-info-circle mr-1"></i> No members found in the selected team.
+            </p>
         </div>
 
         <!-- Task Steps -->
@@ -242,6 +245,37 @@
 
 {% block extra_js %}
 <script>
+// Filter Assign To members based on selected Team
+const teamSelect = document.querySelector('select[name="team"]');
+const memberLabels = document.querySelectorAll('.assign-member-label');
+const noTeamMembersMsg = document.getElementById('noTeamMembersMsg');
+
+function filterMembersByTeam() {
+    const selectedTeamId = teamSelect.value;
+    let visibleCount = 0;
+
+    memberLabels.forEach(label => {
+        const memberTeamId = label.getAttribute('data-team-id');
+        const checkbox = label.querySelector('input[type="checkbox"]');
+
+        if (!selectedTeamId) {
+            // No team selected: show all members
+            label.style.display = '';
+            visibleCount++;
+        } else if (memberTeamId === selectedTeamId) {
+            label.style.display = '';
+            visibleCount++;
+        } else {
+            label.style.display = 'none';
+            checkbox.checked = false; // uncheck hidden members
+        }
+    });
+
+    noTeamMembersMsg.classList.toggle('hidden', visibleCount > 0);
+}
+
+teamSelect.addEventListener('change', filterMembersByTeam);
+
 let stepCount = 0;
 
 function addStep() {
